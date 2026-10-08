@@ -9,7 +9,6 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
-                'resources/js/passkeys.js',
             ],
             refresh: true,
             fonts: [
@@ -21,6 +20,7 @@ export default defineConfig({
         tailwindcss(),
     ]),
     server: {
+        host: '127.0.0.1',
         cors: true,
         watch: {
             ignored: [

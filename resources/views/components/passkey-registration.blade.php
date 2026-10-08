@@ -1,7 +1,3 @@
-@assets
-@vite('resources/js/passkeys.js')
-@endassets
-
 <div
     x-data="{
         supported: false,

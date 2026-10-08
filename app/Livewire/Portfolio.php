@@ -11,12 +11,10 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Layout('layouts.app')]
+#[Layout('layouts.app.dashboard')]
 #[Title('Meus eventos')]
 class Portfolio extends Component
 {
-    public string $filter = 'active';
-
     public function render(EventFinanceReader $reader, StatementBuilder $builder): View
     {
         OfficialCatalog::ensure();
@@ -36,33 +34,12 @@ class Portfolio extends Component
             ];
         });
 
-        $visible = $rows->filter(function (array $row): bool {
-            $status = $row['event']->status->value;
-
-            return match ($this->filter) {
-                'finished' => $status === 'finished',
-                'all' => true,
-                default => ! in_array($status, ['finished', 'cancelled'], true),
-            };
-        })->values();
-
-        $history = $rows->reject(fn (array $row): bool => $row['event']->status->value === 'cancelled');
-        $gross = (int) $history->sum(fn (array $row): int => $row['statement']->actualGross);
-        $costs = (int) $history->sum(fn (array $row): int => $row['statement']->committedCosts);
-        $profit = (int) $history->sum(fn (array $row): int => $row['statement']->currentResult);
-        $people = (int) $history->sum(fn (array $row): int => $row['statement']->ticketsSold + $row['statement']->confirmedGuestHeads);
+        $visible = $rows
+            ->reject(fn (array $row): bool => $row['event']->status->value === 'cancelled')
+            ->values();
 
         return view('livewire.portfolio', [
             'rows' => $visible,
-            'totals' => [
-                'events' => $history->count(),
-                'gross' => $gross,
-                'costs' => $costs,
-                'profit' => $profit,
-                'margin' => $gross > 0 ? intdiv($profit * 10000, $gross) : null,
-                'people' => $people,
-                'averageTicket' => $people > 0 ? intdiv($gross, $people) : null,
-            ],
         ]);
     }
 }

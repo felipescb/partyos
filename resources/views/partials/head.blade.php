@@ -14,7 +14,6 @@
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance
 <script>
-    const keepLight = () => document.documentElement.classList.remove('dark')
-    keepLight()
-    new MutationObserver(keepLight).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    localStorage.setItem('flux.appearance', 'light')
+    window.Flux.applyAppearance('light')
 </script>

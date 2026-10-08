@@ -6,13 +6,23 @@
     <body class="tile-shell min-h-screen">
         @php($currentEvent = request()->route('event') instanceof \App\Models\Event ? request()->route('event') : null)
 
-        <header class="tile-top">
-            <a href="{{ route('dashboard') }}" wire:navigate class="font-display text-base font-bold tracking-[-0.5px] text-ink">PartyOS</a>
-            <flux:dropdown position="bottom" align="end">
-                <button type="button" class="tile tile-sm !min-h-12 !w-auto !flex-row items-center gap-2 !px-3">
-                    <span class="grid size-8 place-items-center rounded-[12px] bg-brand text-sm font-semibold text-white">{{ auth()->user()->initials() }}</span>
-                    <span class="hidden sm:block">{{ auth()->user()->name }}</span>
-                </button>
+        <header class="broker-statusbar broker-statusbar-app" role="banner">
+            <div class="broker-statusbar-start">
+                <a href="{{ route('dashboard') }}" wire:navigate class="broker-statusbar-brand">PartyOS</a>
+                @if ($currentEvent)
+                    <span class="broker-statusbar-sep" aria-hidden="true"></span>
+                    <span class="broker-statusbar-title">{{ $currentEvent->name }}</span>
+                @endif
+            </div>
+            <div class="broker-statusbar-end">
+                <a href="{{ route('dashboard') }}" wire:navigate @class(['broker-statusbar-link', 'broker-statusbar-link-active' => request()->routeIs('dashboard')])>
+                    Eventos
+                </a>
+                <flux:dropdown position="bottom" align="end">
+                    <button type="button" class="broker-statusbar-user">
+                        <span class="broker-statusbar-avatar">{{ auth()->user()->initials() }}</span>
+                        <span class="broker-statusbar-username hidden sm:inline">{{ auth()->user()->name }}</span>
+                    </button>
                 <flux:menu>
                     <div class="px-2 py-1.5 text-sm">
                         <p class="font-medium">{{ auth()->user()->name }}</p>
@@ -27,7 +37,8 @@
                         </flux:menu.item>
                     </form>
                 </flux:menu>
-            </flux:dropdown>
+                </flux:dropdown>
+            </div>
         </header>
 
         <main @class(['tile-stage', 'tile-stage-event' => $currentEvent && ! request()->routeIs('events.show')])>
