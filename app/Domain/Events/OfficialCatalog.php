@@ -11,11 +11,16 @@ final class OfficialCatalog
 {
     public static function ensure(): void
     {
-        if (CostCategory::query()->where('is_system', true)->exists()) {
-            return;
+        if (! CostCategory::query()->where('is_system', true)->exists()) {
+            foreach (self::categories() as $slug => $name) {
+                CostCategory::query()->updateOrCreate(
+                    ['slug' => $slug],
+                    ['name' => $name, 'is_system' => true, 'organization_id' => null],
+                );
+            }
         }
 
-        self::sync();
+        self::syncTemplates();
     }
 
     public static function sync(): void
@@ -27,7 +32,16 @@ final class OfficialCatalog
             );
         }
 
+        self::syncTemplates();
+    }
+
+    public static function syncTemplates(): void
+    {
+        $activeSlugs = [];
+
         foreach (self::templates() as $template) {
+            $activeSlugs[] = $template['slug'];
+
             EventTemplate::query()->updateOrCreate(
                 ['slug' => $template['slug'], 'organization_id' => null],
                 [
@@ -42,6 +56,11 @@ final class OfficialCatalog
                 ],
             );
         }
+
+        EventTemplate::query()
+            ->whereNull('organization_id')
+            ->whereNotIn('slug', $activeSlugs)
+            ->update(['is_official' => false]);
     }
 
     /**
@@ -79,74 +98,30 @@ final class OfficialCatalog
     public static function templates(): array
     {
         return [
-            self::template('festa', 'Festa', EventType::Party, 'Estrutura de uma festa com casa, artistas e portaria.', [
-                ['Definir o local', 'producao', 'high'],
-                ['Fechar artistas', 'artistas', 'high'],
-                ['Contratar segurança', 'producao', 'high'],
-                ['Contratar foto e vídeo', 'producao', 'medium'],
-                ['Criar a identidade', 'marketing', 'medium'],
-                ['Abrir as vendas', 'marketing', 'high'],
-                ['Divulgar', 'marketing', 'medium'],
-                ['Confirmar riders', 'artistas', 'medium'],
-                ['Fechar a lista de convidados', 'producao', 'medium'],
-                ['Preparar a portaria', 'producao', 'high'],
-                ['Preparar o caixa', 'financeiro', 'high'],
-                ['Fechar a produção', 'producao', 'high'],
-            ], [
-                ['Montagem', -240, 180],
-                ['Soundcheck', -90, 60],
-                ['Abertura da casa', 0, 90],
-                ['Primeiro artista', 90, 75],
-                ['Encerramento', 360, 30],
-                ['Desmontagem', 390, 90],
-            ]),
-            self::template('rave', 'Rave', EventType::Rave, 'Noite longa, som, luz e operação de pista.', [
-                ['Fechar o galpão ou a venue', 'producao', 'high'],
+            self::template('festa', 'Festa / Rave', EventType::Party, 'Casa ou galpão, lineup, pista, portaria e noite longa.', [
+                ['Definir o local ou venue', 'producao', 'high'],
                 ['Montar o lineup', 'artistas', 'high'],
                 ['Fechar som e luz', 'producao', 'high'],
                 ['Contratar segurança e brigada', 'producao', 'high'],
-                ['Definir bar e copos', 'producao', 'medium'],
-                ['Abrir a pré-venda', 'marketing', 'high'],
                 ['Checar gerador e energia', 'producao', 'high'],
-                ['Briefing da equipe de pista', 'producao', 'medium'],
+                ['Definir bar e operação de pista', 'producao', 'medium'],
+                ['Contratar foto e vídeo', 'producao', 'medium'],
+                ['Criar identidade e abrir vendas', 'marketing', 'high'],
+                ['Divulgar', 'marketing', 'medium'],
+                ['Confirmar riders', 'artistas', 'medium'],
+                ['Fechar lista e portaria', 'producao', 'high'],
+                ['Preparar caixa', 'financeiro', 'high'],
+                ['Briefing da equipe', 'producao', 'medium'],
+                ['Fechar a produção', 'producao', 'high'],
             ], [
                 ['Chegada da estrutura', -480, 120],
                 ['Montagem', -360, 240],
                 ['Soundcheck', -90, 60],
-                ['Abertura', 0, 120],
-                ['Pico da pista', 180, 180],
+                ['Abertura da casa', 0, 120],
+                ['Primeiro artista', 120, 75],
+                ['Pico da pista', 240, 180],
                 ['Encerramento', 480, 30],
-            ]),
-            self::template('show', 'Show', EventType::Show, 'Apresentação com horário de palco e camarim.', [
-                ['Fechar o artista principal', 'artistas', 'high'],
-                ['Fechar venue e horário', 'producao', 'high'],
-                ['Rider técnico', 'artistas', 'high'],
-                ['Som, luz e palco', 'producao', 'high'],
-                ['Camarim e hospitalidade', 'producao', 'medium'],
-                ['Plano de vendas', 'marketing', 'high'],
-                ['Ensaio ou passagem de som', 'producao', 'high'],
-            ], [
-                ['Montagem', -300, 180],
-                ['Passagem de som', -120, 60],
-                ['Abertura da casa', -30, 30],
-                ['Show', 0, 90],
-                ['Encore', 90, 15],
-                ['Saída do público', 110, 40],
-            ]),
-            self::template('festival', 'Festival', EventType::Festival, 'Vários palcos, dias e frentes de produção.', [
-                ['Mapa do evento', 'producao', 'high'],
-                ['Grade de horários', 'producao', 'high'],
-                ['Fornecedores por frente', 'producao', 'high'],
-                ['Plano de segurança', 'producao', 'high'],
-                ['Bilheteria e lotes', 'marketing', 'high'],
-                ['Operação de palco', 'producao', 'medium'],
-                ['Plano de contingência', 'producao', 'medium'],
-            ], [
-                ['Abertura dos portões', 0, 60],
-                ['Primeiro show', 60, 50],
-                ['Troca de palco', 110, 20],
-                ['Headliner', 240, 80],
-                ['Encerramento', 360, 30],
+                ['Desmontagem', 510, 90],
             ]),
             self::template('jantar', 'Jantar', EventType::Dinner, 'Mesa, cozinha, serviço e convidados.', [
                 ['Definir o menu', 'producao', 'high'],
@@ -161,20 +136,6 @@ final class OfficialCatalog
                 ['Jantar', 40, 90],
                 ['Encerramento', 150, 30],
             ]),
-            self::template('corporativo', 'Evento corporativo', EventType::Corporate, 'Briefing, pauta e fornecedores com contrato.', [
-                ['Alinhar o briefing com o cliente', 'producao', 'high'],
-                ['Fechar local e capacidade', 'producao', 'high'],
-                ['Orçamento aprovado', 'financeiro', 'high'],
-                ['Fornecedores e contratos', 'producao', 'high'],
-                ['Roteiro do dia', 'producao', 'medium'],
-                ['Credenciamento', 'producao', 'medium'],
-            ], [
-                ['Credenciamento', -60, 60],
-                ['Abertura', 0, 20],
-                ['Conteúdo', 20, 90],
-                ['Intervalo', 110, 20],
-                ['Encerramento', 180, 20],
-            ]),
             self::template('exposicao', 'Exposição', EventType::Exhibition, 'Montagem, obras, visitação e desmontagem.', [
                 ['Lista de obras ou peças', 'producao', 'high'],
                 ['Planta da montagem', 'producao', 'high'],
@@ -185,33 +146,6 @@ final class OfficialCatalog
                 ['Montagem', -480, 360],
                 ['Abertura', 0, 120],
                 ['Visitação', 120, 180],
-            ]),
-            self::template('casamento', 'Casamento', EventType::Wedding, 'Cerimônia, festa e fornecedores da celebração.', [
-                ['Confirmar local e data', 'producao', 'high'],
-                ['Lista de convidados', 'producao', 'high'],
-                ['Buffet', 'producao', 'high'],
-                ['Música', 'artistas', 'medium'],
-                ['Foto e vídeo', 'producao', 'medium'],
-                ['Decoração', 'producao', 'medium'],
-                ['Cronograma do dia', 'producao', 'high'],
-            ], [
-                ['Chegada dos fornecedores', -240, 120],
-                ['Cerimônia', 0, 40],
-                ['Recepção', 40, 50],
-                ['Festa', 90, 180],
-                ['Encerramento', 270, 30],
-            ]),
-            self::template('privado', 'Evento privado', EventType::PrivateEvent, 'Um evento fechado, com lista e operação curta.', [
-                ['Definir o formato', 'producao', 'high'],
-                ['Lista de convidados', 'producao', 'high'],
-                ['Local', 'producao', 'high'],
-                ['Comida e bebida', 'producao', 'medium'],
-                ['Quem recebe na porta', 'producao', 'medium'],
-            ], [
-                ['Preparação', -120, 90],
-                ['Chegada', 0, 45],
-                ['Evento', 45, 150],
-                ['Encerramento', 195, 30],
             ]),
         ];
     }

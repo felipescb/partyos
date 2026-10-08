@@ -7,135 +7,189 @@ use App\Enums\TaskStatus;
 use App\Livewire\Concerns\InteractsWithEvent;
 use App\Models\Event;
 use App\Models\Task;
-use Flux\Flux;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('layouts.app')]
+#[Layout('layouts.app.dashboard')]
 class TaskBoard extends Component
 {
     use InteractsWithEvent;
 
-    public string $filter = 'open';
+    public string $filter = 'all';
 
-    public bool $showForm = false;
+    public string $sortColumn = 'due_on';
 
-    public ?int $editingId = null;
+    public string $sortDirection = 'asc';
 
-    public string $title = '';
+    public string $newTaskTitle = '';
 
-    public string $description = '';
-
-    public string $dueOn = '';
-
-    public string $status = 'todo';
-
-    public string $priority = 'medium';
-
-    public string $category = '';
-
-    public string $dependsOn = '';
+    public ?int $expandedId = null;
 
     public function mount(Event $event): void
     {
         $this->mountEvent($event);
     }
 
-    public function create(): void
+    public function createFromDraft(): void
     {
         $this->authorize('manageOperations', $this->event);
-        $this->resetForm();
-        $this->showForm = true;
+
+        $this->validate([
+            'newTaskTitle' => ['required', 'string', 'max:160'],
+        ], [
+            'newTaskTitle.required' => 'Escreva o que precisa ser feito.',
+        ]);
+
+        $this->event->tasks()->create([
+            'title' => trim($this->newTaskTitle),
+            'status' => TaskStatus::Todo,
+            'priority' => TaskPriority::Medium,
+            'assignee_id' => auth()->id(),
+        ]);
+
+        $this->reset('newTaskTitle');
     }
 
-    public function edit(int $id): void
+    public function toggleDone(int $id): void
     {
         $this->authorize('manageOperations', $this->event);
         $task = $this->task($id);
-        $this->editingId = $task->id;
-        $this->title = $task->title;
-        $this->description = (string) $task->description;
-        $this->dueOn = $task->due_on?->toDateString() ?? '';
-        $this->status = $task->status->value;
-        $this->priority = $task->priority->value;
-        $this->category = (string) $task->category;
-        $this->dependsOn = $task->depends_on_task_id ? (string) $task->depends_on_task_id : '';
-        $this->showForm = true;
+        $next = $task->status === TaskStatus::Done ? TaskStatus::Todo : TaskStatus::Done;
+        $task->update(['status' => $next]);
     }
 
-    public function save(): void
+    public function updateTaskTitle(int $id, string $title): void
     {
         $this->authorize('manageOperations', $this->event);
-        $this->validate([
-            'title' => ['required', 'string', 'max:160'],
-            'description' => ['nullable', 'string', 'max:2000'],
-            'dueOn' => ['nullable', 'date'],
-            'status' => ['required', Rule::enum(TaskStatus::class)],
-            'priority' => ['required', Rule::enum(TaskPriority::class)],
-            'category' => ['nullable', 'string', 'max:40'],
-            'dependsOn' => ['nullable', 'integer'],
-        ], [
-            'title.required' => 'O que precisa ser feito?',
-        ]);
+        $title = trim($title);
 
-        if ($this->dependsOn !== '' && (int) $this->dependsOn === $this->editingId) {
-            $this->addError('dependsOn', 'Uma tarefa não pode depender dela mesma.');
-
+        if ($title === '') {
             return;
         }
 
-        $data = [
-            'event_id' => $this->event->id,
-            'title' => $this->title,
-            'description' => $this->description !== '' ? $this->description : null,
-            'due_on' => $this->dueOn !== '' ? $this->dueOn : null,
-            'status' => $this->status,
-            'priority' => $this->priority,
-            'category' => $this->category !== '' ? $this->category : null,
-            'depends_on_task_id' => $this->dependsOn !== '' ? (int) $this->dependsOn : null,
-            'assignee_id' => auth()->id(),
-        ];
+        validator(['title' => $title], [
+            'title' => ['required', 'string', 'max:160'],
+        ])->validate();
 
-        if ($this->editingId) {
-            $this->task($this->editingId)->update($data);
-        } else {
-            $this->event->tasks()->create($data);
-        }
-
-        $this->showForm = false;
-        Flux::toast(variant: 'success', text: 'Tarefa salva.');
+        $this->task($id)->update(['title' => $title]);
     }
 
-    public function advance(int $id): void
+    public function updateTaskStatus(int $id, string $status): void
     {
         $this->authorize('manageOperations', $this->event);
-        $task = $this->task($id);
-        $next = match ($task->status) {
-            TaskStatus::Backlog => TaskStatus::Todo,
-            TaskStatus::Todo => TaskStatus::Doing,
-            TaskStatus::Doing => TaskStatus::Done,
-            TaskStatus::Blocked => TaskStatus::Doing,
-            TaskStatus::Done => TaskStatus::Todo,
-        };
-        $task->update(['status' => $next]);
+
+        if (! TaskStatus::tryFrom($status) instanceof TaskStatus) {
+            return;
+        }
+
+        $this->task($id)->update(['status' => $status]);
+    }
+
+    public function updateTaskPriority(int $id, string $priority): void
+    {
+        $this->authorize('manageOperations', $this->event);
+
+        if (! TaskPriority::tryFrom($priority) instanceof TaskPriority) {
+            return;
+        }
+
+        $this->task($id)->update(['priority' => $priority]);
+    }
+
+    public function updateTaskDueOn(int $id, string $dueOn): void
+    {
+        $this->authorize('manageOperations', $this->event);
+
+        if ($dueOn !== '') {
+            validator(['dueOn' => $dueOn], ['dueOn' => ['date']])->validate();
+        }
+
+        $this->task($id)->update([
+            'due_on' => $dueOn !== '' ? $dueOn : null,
+        ]);
+    }
+
+    public function updateTaskCategory(int $id, string $category): void
+    {
+        $this->authorize('manageOperations', $this->event);
+
+        validator(['category' => $category], [
+            'category' => ['nullable', 'string', 'max:40'],
+        ])->validate();
+
+        $this->task($id)->update([
+            'category' => trim($category) !== '' ? trim($category) : null,
+        ]);
+    }
+
+    public function updateTaskDescription(int $id, string $description): void
+    {
+        $this->authorize('manageOperations', $this->event);
+
+        validator(['description' => $description], [
+            'description' => ['nullable', 'string', 'max:2000'],
+        ])->validate();
+
+        $this->task($id)->update([
+            'description' => trim($description) !== '' ? trim($description) : null,
+        ]);
+    }
+
+    public function updateTaskDependsOn(int $id, string $dependsOn): void
+    {
+        $this->authorize('manageOperations', $this->event);
+
+        if ($dependsOn !== '' && (int) $dependsOn === $id) {
+            return;
+        }
+
+        $this->task($id)->update([
+            'depends_on_task_id' => $dependsOn !== '' ? (int) $dependsOn : null,
+        ]);
+    }
+
+    public function toggleExpand(int $id): void
+    {
+        $this->expandedId = $this->expandedId === $id ? null : $id;
+    }
+
+    public function sort(string $column): void
+    {
+        $allowed = ['title', 'status', 'priority', 'due_on', 'category'];
+
+        if (! in_array($column, $allowed, true)) {
+            return;
+        }
+
+        if ($this->sortColumn === $column) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortColumn = $column;
+            $this->sortDirection = 'asc';
+        }
     }
 
     public function destroy(int $id): void
     {
         $this->authorize('manageOperations', $this->event);
         $this->task($id)->delete();
-        $this->showForm = false;
+
+        if ($this->expandedId === $id) {
+            $this->expandedId = null;
+        }
     }
 
     public function render(): View
     {
-        $tasks = $this->event->tasks()->with('dependsOn')->orderByRaw('due_on is null')->orderBy('due_on')->get();
+        $tasks = $this->event->tasks()->with('dependsOn')->get();
 
         if ($this->filter === 'open') {
             $tasks = $tasks->reject(fn (Task $task): bool => $task->status === TaskStatus::Done)->values();
         }
+
+        $tasks = $this->sortedTasks($tasks);
 
         return view('livewire.tasks.board', [
             'tasks' => $tasks,
@@ -143,6 +197,7 @@ class TaskBoard extends Component
             'statuses' => TaskStatus::cases(),
             'priorities' => TaskPriority::cases(),
             'canEdit' => auth()->user()->can('manageOperations', $this->event),
+            'openCount' => $this->event->tasks()->where('status', '!=', TaskStatus::Done)->count(),
         ])->title('Tarefas · '.$this->event->name);
     }
 
@@ -151,15 +206,65 @@ class TaskBoard extends Component
         return $this->event->tasks()->findOrFail($id);
     }
 
-    private function resetForm(): void
+    /**
+     * @param  Collection<int, Task>  $tasks
+     * @return Collection<int, Task>
+     */
+    private function sortedTasks(Collection $tasks): Collection
     {
-        $this->editingId = null;
-        $this->title = '';
-        $this->description = '';
-        $this->dueOn = '';
-        $this->status = TaskStatus::Todo->value;
-        $this->priority = TaskPriority::Medium->value;
-        $this->category = '';
-        $this->dependsOn = '';
+        $desc = $this->sortDirection === 'desc';
+
+        $sorted = match ($this->sortColumn) {
+            'title' => $tasks->sortBy(
+                fn (Task $task): string => mb_strtolower($task->title),
+                SORT_REGULAR,
+                $desc,
+            ),
+            'status' => $tasks->sortBy(
+                fn (Task $task): int => $this->statusSortKey($task->status),
+                SORT_REGULAR,
+                $desc,
+            ),
+            'priority' => $tasks->sortBy(
+                fn (Task $task): int => $this->prioritySortKey($task->priority),
+                SORT_REGULAR,
+                $desc,
+            ),
+            'category' => $tasks->sortBy(
+                fn (Task $task): string => mb_strtolower($task->category ?? ''),
+                SORT_REGULAR,
+                $desc,
+            ),
+            default => $tasks->sortBy(
+                fn (Task $task): array => [
+                    $task->due_on === null ? 1 : 0,
+                    $task->due_on?->timestamp ?? 0,
+                ],
+                SORT_REGULAR,
+                $desc,
+            ),
+        };
+
+        return $sorted->values();
+    }
+
+    private function statusSortKey(TaskStatus $status): int
+    {
+        return match ($status) {
+            TaskStatus::Backlog => 0,
+            TaskStatus::Todo => 1,
+            TaskStatus::Doing => 2,
+            TaskStatus::Blocked => 3,
+            TaskStatus::Done => 4,
+        };
+    }
+
+    private function prioritySortKey(TaskPriority $priority): int
+    {
+        return match ($priority) {
+            TaskPriority::High => 0,
+            TaskPriority::Medium => 1,
+            TaskPriority::Low => 2,
+        };
     }
 }

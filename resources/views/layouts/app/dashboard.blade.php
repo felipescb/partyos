@@ -4,21 +4,26 @@
         @include('partials.head')
     </head>
     <body class="broker-shell min-h-dvh">
+        @php($routeEvent = request()->route('event'))
+        @php($headerEvent = $routeEvent instanceof \App\Models\Event ? $routeEvent : null)
         <header class="broker-statusbar" role="banner">
             <div class="broker-statusbar-start">
                 <a href="{{ route('dashboard') }}" wire:navigate class="broker-statusbar-brand">PartyOS</a>
                 <span class="broker-statusbar-sep" aria-hidden="true"></span>
-                <span class="broker-statusbar-title">{{ $title ?? __('Meus eventos') }}</span>
+                <span class="broker-statusbar-title">{{ $headerEvent?->name ?? ($title ?? __('Meus eventos')) }}</span>
             </div>
 
             <div class="broker-statusbar-end">
+                <a href="{{ route('dashboard') }}" wire:navigate @class(['broker-statusbar-link', 'broker-statusbar-link-active' => request()->routeIs('dashboard', 'events.show')])>
+                    Eventos
+                </a>
                 <a href="{{ route('vendors.index') }}" wire:navigate @class(['broker-statusbar-link', 'broker-statusbar-link-active' => request()->routeIs('vendors.*')])>
                     Fornecedores
                 </a>
                 <a href="{{ route('artists.index') }}" wire:navigate @class(['broker-statusbar-link', 'broker-statusbar-link-active' => request()->routeIs('artists.*')])>
                     Artistas
                 </a>
-                <a href="{{ route('events.create') }}" wire:navigate @class(['broker-statusbar-link', 'broker-statusbar-link-accent' => request()->routeIs('events.create')])>
+                <a href="{{ route('events.create') }}" wire:navigate @class(['broker-statusbar-link', 'broker-statusbar-link-accent' => request()->routeIs('events.create', 'events.create.configure')])>
                     Novo evento
                 </a>
                 <span class="broker-statusbar-sep" aria-hidden="true"></span>

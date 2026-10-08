@@ -1,154 +1,177 @@
-<div class="flex flex-col gap-5">
-    <div class="flex flex-wrap items-end justify-between gap-4">
-        <div>
-            <p class="tile-kicker">{{ $event->type->label() }} · {{ $event->status->label() }}</p>
-            <h1 class="mt-1">{{ $event->name }}</h1>
-            <p class="mt-2 text-steel">
-                {{ $event->whenLabel() }}
-                @if ($event->venue_name) · {{ $event->venue_name }} @endif
-                @if ($event->city) · {{ $event->city }} @endif
-                @if ($event->capacity) · {{ $event->capacity }} pessoas @endif
-            </p>
-        </div>
-        @can('manageOperations', $event)
-            <div class="grid w-full grid-cols-2 gap-3 sm:w-auto">
-                <x-tile :href="route('events.edit', $event)" size="sm">
-                    <span class="tile-kicker">Evento</span>
-                    <span class="tile-title">Editar</span>
-                </x-tile>
-                <x-tile type="button" size="sm" tone="accent" wire:click="$set('showDuplicate', true)">
-                    <span class="tile-kicker">Edição</span>
-                    <span class="tile-title">Duplicar</span>
-                </x-tile>
-            </div>
-        @endcan
+<div class="broker-grid broker-grid-event" role="list" aria-label="Quadro do evento">
+    <div class="broker-event-intro-stack broker-h-3">
+            <article class="broker-grid-item broker-card broker-card-hero" role="listitem">
+                <div class="broker-card-head">
+                    <x-event-category-symbol category="evento" :label="$event->type->label()" />
+                    <div class="broker-card-actions">
+                        <span @class(['broker-card-status', 'broker-card-status-'.$statusTone])>{{ $event->status->label() }}</span>
+                        @can('viewFinance', $event)
+                            <a href="{{ route('events.tickets', $event) }}" wire:navigate class="broker-card-icon-btn" aria-label="Gerenciar ingressos">
+                                <flux:icon.ticket variant="mini" class="size-4" />
+                            </a>
+                        @endcan
+                        @can('manageOperations', $event)
+                            <a href="{{ route('events.edit', $event) }}" wire:navigate class="broker-card-icon-btn" aria-label="Editar evento">
+                                <flux:icon.pencil-square variant="mini" class="size-4" />
+                            </a>
+                        @endcan
+                    </div>
+                </div>
+                <div class="broker-card-hero-body">
+                    <h1 class="broker-card-hero-title">{{ $event->name }}</h1>
+                    <p class="broker-card-hero-meta">
+                        {{ $event->whenLabel() }}
+                        @if ($event->venue_name) · {{ $event->venue_name }} @endif
+                        @if ($event->city) · {{ $event->city }} @endif
+                        @if ($event->capacity) · {{ $event->capacity }} pessoas @endif
+                    </p>
+                    @if ($canFinance)
+                        <p class="broker-card-hero-quote">
+                            <x-money :cents="$statement->projectedProfit" :currency="$event->currency" />
+                            <span class="broker-card-hero-quote-label">lucro projetado</span>
+                        </p>
+                    @endif
+                </div>
+            </article>
+
+            <x-event-task-grid
+                :event="$event"
+                :tasks="$tasks"
+                :open-count="$pendingTasks"
+                class="broker-grid-item broker-event-tasks"
+            />
+
+            <x-event-team-grid
+                :event="$event"
+                :members="$teamMembers"
+                :member-count="$teamMemberCount"
+                :can-manage="$canManageTeam"
+                :roles="$teamRoles"
+                class="broker-grid-item broker-event-team"
+            />
     </div>
 
+    <x-event-planning-timeline
+        :timeline="$planningTimeline"
+        :event="$event"
+        class="broker-grid-item broker-event-intro-timeline"
+    />
+
+    @can('viewFinance', $event)
+        <a href="{{ route('events.costs', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="financeiro" />
+            <span class="broker-card-name">Custos</span>
+            <span class="broker-card-quote"><x-money :cents="$statement->committedCosts" :currency="$event->currency" /></span>
+            <span class="broker-card-foot">Resta <x-money :cents="$statement->remainingCosts" :currency="$event->currency" /></span>
+        </a>
+        <x-event-ticket-grid
+            :event="$event"
+            :tiers="$ticketTiers"
+            :sold="$ticketsSold"
+            :available="$ticketsAvailable"
+            :projected-profit="$statement->projectedProfit"
+            :expanded="$ticketsGridExpanded"
+            :can-manage="auth()->user()->can('manageFinance', $event)"
+            class="broker-grid-item"
+        />
+        <a href="{{ route('events.revenues', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="financeiro" />
+            <span class="broker-card-name">Receitas</span>
+            <span class="broker-card-quote"><x-money :cents="$statement->expectedOtherRevenue" :currency="$event->currency" /></span>
+            <span class="broker-card-foot">Fora dos ingressos</span>
+        </a>
+        <a href="{{ route('events.close', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="financeiro" />
+            <span class="broker-card-name">Resultado</span>
+            <span class="broker-card-quote"><x-money :cents="$statement->projectedProfit" :currency="$event->currency" /></span>
+            <span class="broker-card-foot">Lucro projetado</span>
+        </a>
+        <a href="{{ route('events.scenarios', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="financeiro" />
+            <span class="broker-card-name">Empate</span>
+            @if ($statement->committedCosts === 0 && $statement->ticketsGoal === 0)
+                <span class="broker-card-quote broker-card-quote-muted">—</span>
+                <span class="broker-card-foot">Falta custo e lote</span>
+            @elseif ($statement->breakEvenPeople === null)
+                <span class="broker-card-quote broker-card-quote-muted">—</span>
+                <span class="broker-card-foot">Defina a meta dos lotes</span>
+            @else
+                <span class="broker-card-quote">{{ $statement->breakEvenPeople }}</span>
+                <span class="broker-card-foot">pessoas para empatar</span>
+            @endif
+        </a>
+        <a href="{{ route('events.cashflow', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="financeiro" />
+            <span class="broker-card-name">Fluxo</span>
+            @if ($payments->isNotEmpty())
+                <span class="broker-card-quote"><x-money :cents="$payments->sum('amount')" :currency="$event->currency" /></span>
+                <span class="broker-card-foot">{{ $payments->count() }} saídas agendadas</span>
+            @else
+                <span class="broker-card-quote broker-card-quote-muted">—</span>
+                <span class="broker-card-foot">Nada agendado</span>
+            @endif
+        </a>
+        <a href="{{ route('events.distribution', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="financeiro" />
+            <span class="broker-card-name">Divisão</span>
+            <span class="broker-card-foot">Taxas e quem fica com o quê</span>
+        </a>
+    @endcan
+
+    <a href="{{ route('events.schedule', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
+        <x-event-category-symbol category="operacao" />
+        <span class="broker-card-name">Horários</span>
+        <span class="broker-card-quote">{{ $next?->starts_at?->format('H:i') ?? '—' }}</span>
+        <span class="broker-card-foot">{{ $next?->title ?? 'Cronograma vazio' }}</span>
+    </a>
+    @can('viewGuests', $event)
+        <a href="{{ route('events.guests', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="casa" />
+            <span class="broker-card-name">Convidados</span>
+            <span class="broker-card-quote">{{ $statement->confirmedGuestHeads }}</span>
+            <span class="broker-card-foot">Confirmados</span>
+        </a>
+    @endcan
+    <a href="{{ route('events.artists', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
+        <x-event-category-symbol category="casa" />
+        <span class="broker-card-name">Lineup</span>
+        <span class="broker-card-quote">{{ $lineupCount }}</span>
+        <span class="broker-card-foot">Artistas neste evento</span>
+    </a>
     @if ($event->status === \App\Enums\EventStatus::Live)
-        <x-tile as="div" tone="live" span class="!min-h-0">
-            <span class="tile-kicker">Ao vivo</span>
-            <span class="tile-title text-3xl">{{ $next?->title ?? 'Nada no cronograma agora' }}</span>
-            <span class="tile-meta">
+        <article class="broker-grid-item broker-card broker-card-span-2 broker-card-live broker-event-stack-span" role="listitem">
+            <x-event-category-symbol category="ao-vivo" />
+            <span class="broker-card-name">{{ $next?->title ?? 'Nada no cronograma agora' }}</span>
+            <span class="broker-card-foot">
                 {{ $next?->starts_at?->format('H:i') }}
                 · {{ $statement->ticketsSold }} ingressos vendidos
                 · meta {{ $statement->ticketsGoal + $statement->confirmedGuestHeads }} pessoas
             </span>
-        </x-tile>
+        </article>
     @endif
 
     @if ($canFinance)
         @foreach ($alerts as $alert)
-            <x-tile
-                :href="$alert->route ? route($alert->route, $event) : null"
-                :as="$alert->route ? null : 'div'"
-                span
-                class="!min-h-0"
-            >
-                <span class="tile-kicker">{{ $alert->tone === 'danger' ? 'Atenção' : 'Olhar' }}</span>
-                <span class="tile-title">{{ $alert->message }}</span>
-                @if ($alert->route)
-                    <span class="tile-meta">Toque para resolver</span>
-                @endif
-            </x-tile>
+            @if ($alert->route)
+                <a href="{{ route($alert->route, $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-span-2 broker-card-alert broker-event-stack-span" role="listitem">
+                    <x-event-category-symbol :category="$alert->tone === 'danger' ? 'atencao' : 'olhar'" />
+                    <span class="broker-card-name">{{ $alert->message }}</span>
+                    <span class="broker-card-foot">Toque para resolver</span>
+                </a>
+            @else
+                <article class="broker-grid-item broker-card broker-card-span-2 broker-card-alert broker-event-stack-span" role="listitem">
+                    <x-event-category-symbol :category="$alert->tone === 'danger' ? 'atencao' : 'olhar'" />
+                    <span class="broker-card-name">{{ $alert->message }}</span>
+                </article>
+            @endif
         @endforeach
     @endif
 
-    <section class="tile-grid" aria-label="Quadro do evento">
-        @can('viewFinance', $event)
-            <x-tile :href="route('events.costs', $event)" size="lg">
-                <span class="tile-kicker">Dinheiro</span>
-                <span class="tile-title">Custos</span>
-                <span class="tile-value"><x-money :cents="$statement->committedCosts" :currency="$event->currency" /></span>
-                <span class="tile-meta">Resta <x-money :cents="$statement->remainingCosts" :currency="$event->currency" /></span>
-            </x-tile>
-            <x-tile :href="route('events.tickets', $event)" size="lg">
-                <span class="tile-kicker">Dinheiro</span>
-                <span class="tile-title">Ingressos</span>
-                <span class="tile-value">{{ $statement->ticketsSold }}<span class="text-xl text-silver">/{{ $statement->ticketsGoal }}</span></span>
-                <span class="tile-meta">Vendidos na meta · <x-money :cents="$statement->actualTicketRevenue" :currency="$event->currency" /></span>
-            </x-tile>
-            <x-tile :href="route('events.revenues', $event)">
-                <span class="tile-kicker">Dinheiro</span>
-                <span class="tile-title">Receitas</span>
-                <span class="tile-value"><x-money :cents="$statement->expectedOtherRevenue" :currency="$event->currency" /></span>
-                <span class="tile-meta">Fora dos ingressos</span>
-            </x-tile>
-            <x-tile :href="route('events.close', $event)" :tone="$statement->projectedProfit < 0 ? 'surface' : 'surface'">
-                <span class="tile-kicker">Dinheiro</span>
-                <span class="tile-title">Resultado</span>
-                <span class="tile-value"><x-money :cents="$statement->projectedProfit" :currency="$event->currency" /></span>
-                <span class="tile-meta">Lucro projetado</span>
-            </x-tile>
-            <x-tile :href="route('events.scenarios', $event)">
-                <span class="tile-kicker">Dinheiro</span>
-                <span class="tile-title">Empate</span>
-                @if ($statement->committedCosts === 0 && $statement->ticketsGoal === 0)
-                    <span class="tile-value">—</span>
-                    <span class="tile-meta">Falta custo e lote</span>
-                @elseif ($statement->breakEvenPeople === null)
-                    <span class="tile-value">—</span>
-                    <span class="tile-meta">Defina a meta dos lotes</span>
-                @else
-                    <span class="tile-value">{{ $statement->breakEvenPeople }}</span>
-                    <span class="tile-meta">pessoas para empatar</span>
-                @endif
-            </x-tile>
-            <x-tile :href="route('events.cashflow', $event)">
-                <span class="tile-kicker">Dinheiro</span>
-                <span class="tile-title">Fluxo</span>
-                @if ($payments->isNotEmpty())
-                    <span class="tile-value"><x-money :cents="$payments->sum('amount')" :currency="$event->currency" /></span>
-                    <span class="tile-meta">{{ $payments->count() }} saídas agendadas</span>
-                @else
-                    <span class="tile-value">—</span>
-                    <span class="tile-meta">Nada agendado</span>
-                @endif
-            </x-tile>
-            <x-tile :href="route('events.distribution', $event)">
-                <span class="tile-kicker">Dinheiro</span>
-                <span class="tile-title">Divisão</span>
-                <span class="tile-meta">Taxas e quem fica com o quê</span>
-            </x-tile>
-        @endcan
-
-        <x-tile :href="route('events.tasks', $event)">
-            <span class="tile-kicker">Dia</span>
-            <span class="tile-title">Tarefas</span>
-            <span class="tile-value">{{ $pendingTasks }}</span>
-            <span class="tile-meta">{{ $tasks->first()?->title ?? 'Nada pendente' }}</span>
-        </x-tile>
-        <x-tile :href="route('events.schedule', $event)">
-            <span class="tile-kicker">Dia</span>
-            <span class="tile-title">Horários</span>
-            <span class="tile-value">{{ $next?->starts_at?->format('H:i') ?? '—' }}</span>
-            <span class="tile-meta">{{ $next?->title ?? 'Cronograma vazio' }}</span>
-        </x-tile>
-        @can('viewGuests', $event)
-            <x-tile :href="route('events.guests', $event)">
-                <span class="tile-kicker">Casa</span>
-                <span class="tile-title">Convidados</span>
-                <span class="tile-value">{{ $statement->confirmedGuestHeads }}</span>
-                <span class="tile-meta">Confirmados, com acompanhantes</span>
-            </x-tile>
-        @endcan
-        <x-tile :href="route('events.artists', $event)">
-            <span class="tile-kicker">Casa</span>
-            <span class="tile-title">Lineup</span>
-            <span class="tile-value">{{ $lineupCount }}</span>
-            <span class="tile-meta">Artistas neste evento</span>
-        </x-tile>
-        <x-tile :href="route('events.team', $event)">
-            <span class="tile-kicker">Dia</span>
-            <span class="tile-title">Equipe</span>
-            <span class="tile-meta">Quem produz, quem vê o caixa, quem opera</span>
-        </x-tile>
-    </section>
-
     @if ($canFinance)
-        <x-tile as="div" span class="!min-h-0">
-            <span class="tile-kicker">Leitura</span>
-            <span class="tile-title">O que isso significa</span>
-            <ul class="mt-2 space-y-2 text-base leading-[1.38] text-steel">
+        <article class="broker-grid-item broker-card broker-card-span-2 broker-card-read broker-event-stack-span" role="listitem">
+            <x-event-category-symbol category="leitura" />
+            <span class="broker-card-name">O que isso significa</span>
+            <ul class="broker-card-read-list">
                 @if ($statement->committedCosts === 0 && $statement->expectedGross === 0)
                     <li>Lance os custos e os lotes. Aí o PartyOS calcula quantas pessoas empatam a noite.</li>
                 @else
@@ -171,27 +194,8 @@
                     @endif
                 @endif
             </ul>
-        </x-tile>
+        </article>
     @endif
 
-    <flux:modal wire:model="showDuplicate" class="max-w-lg">
-        <form wire:submit="duplicate" class="space-y-4">
-            <flux:heading size="lg">Duplicar evento</flux:heading>
-            <flux:text>A nova edição nasce em rascunho. Pagamentos já feitos não são copiados.</flux:text>
-            <flux:input wire:model="duplicateName" label="Nome da nova edição" />
-            <flux:input wire:model="duplicateStarts" type="datetime-local" label="Nova data de início" />
-            <div class="grid grid-cols-2 gap-2 text-sm">
-                @foreach (['budget' => 'Orçamento', 'artists' => 'Artistas', 'tasks' => 'Tarefas', 'schedule' => 'Cronograma', 'tickets' => 'Ingressos', 'guests' => 'Convidados'] as $value => $label)
-                    <label class="flex min-h-12 items-center gap-3">
-                        <input type="checkbox" value="{{ $value }}" wire:model="copy" class="size-5 rounded border-zinc-400">
-                        {{ $label }}
-                    </label>
-                @endforeach
-            </div>
-            <div class="flex justify-end gap-2">
-                <flux:button type="button" wire:click="$set('showDuplicate', false)">Cancelar</flux:button>
-                <flux:button variant="primary" type="submit">Criar edição</flux:button>
-            </div>
-        </form>
-    </flux:modal>
+    @include('partials.event-team-modal')
 </div>

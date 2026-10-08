@@ -27,8 +27,10 @@ use Illuminate\Support\Carbon;
  * @property string|null $description
  * @property EventType $type
  * @property EventStatus $status
+ * @property Carbon|null $planning_starts_at
  * @property Carbon|null $starts_at
  * @property Carbon|null $ends_at
+ * @property int|null $duration_minutes
  * @property string|null $venue_name
  * @property string|null $address
  * @property string|null $city
@@ -46,8 +48,10 @@ use Illuminate\Support\Carbon;
     'description',
     'type',
     'status',
+    'planning_starts_at',
     'starts_at',
     'ends_at',
+    'duration_minutes',
     'venue_name',
     'address',
     'city',
@@ -99,8 +103,10 @@ class Event extends Model
         return [
             'type' => EventType::class,
             'status' => EventStatus::class,
+            'planning_starts_at' => 'date',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
+            'duration_minutes' => 'integer',
             'capacity' => 'integer',
         ];
     }
@@ -257,6 +263,12 @@ class Event extends Model
 
         if ($this->ends_at !== null) {
             $label .= ' – '.$this->ends_at->translatedFormat('H:i');
+        } elseif ($this->duration_minutes !== null && $this->duration_minutes > 0) {
+            $hours = intdiv($this->duration_minutes, 60);
+            $minutes = $this->duration_minutes % 60;
+            $label .= $minutes > 0
+                ? " · {$hours}h{$minutes}min"
+                : " · {$hours}h";
         }
 
         return $label;

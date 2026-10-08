@@ -2,69 +2,47 @@
 
 namespace App\Livewire\Events;
 
-use App\Domain\Events\DuplicateEvent;
-use App\Domain\Events\DuplicateSelection;
+use App\Domain\Events\PlanningTimelineBuilder;
 use App\Domain\Finance\EventAlerts;
 use App\Domain\Finance\EventFinanceReader;
 use App\Domain\Finance\StatementBuilder;
+use App\Enums\EventRole;
+use App\Enums\EventStatus;
 use App\Enums\TaskStatus;
 use App\Livewire\Concerns\InteractsWithEvent;
-use App\Models\Event;
-use Flux\Flux;
+use App\Livewire\Concerns\ManagesEventTeam;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('layouts.app')]
+#[Layout('layouts.app.dashboard')]
 class EventOverview extends Component
 {
     use InteractsWithEvent;
+    use ManagesEventTeam;
 
-    public bool $showDuplicate = false;
+    public bool $ticketsGridExpanded = false;
 
-    public string $duplicateName = '';
-
-    public string $duplicateStarts = '';
-
-    /** @var list<string> */
-    public array $copy = ['budget', 'artists', 'tasks', 'schedule', 'tickets'];
-
-    public function mount(Event $event): void
+    public function mount(\App\Models\Event $event): void
     {
         $this->mountEvent($event);
-        $this->duplicateName = $event->name;
     }
 
-    public function duplicate(DuplicateEvent $duplicator): void
+    public function toggleTicketsGrid(): void
     {
-        $this->authorize('manageOperations', $this->event);
+        if (! auth()->user()->can('viewFinance', $this->event)) {
+            return;
+        }
 
-        $this->validate([
-            'duplicateName' => ['required', 'string', 'max:140'],
-            'duplicateStarts' => ['nullable', 'date'],
-            'copy' => ['array'],
-        ], [
-            'duplicateName.required' => 'A nova edição precisa de um nome.',
-        ]);
-
-        $copy = $duplicator->handle(auth()->user(), $this->event, [
-            'name' => $this->duplicateName,
-            'starts_at' => $this->duplicateStarts !== '' ? $this->duplicateStarts : null,
-        ], new DuplicateSelection(
-            budget: in_array('budget', $this->copy, true),
-            artists: in_array('artists', $this->copy, true),
-            tasks: in_array('tasks', $this->copy, true),
-            schedule: in_array('schedule', $this->copy, true),
-            guests: in_array('guests', $this->copy, true),
-            tickets: in_array('tickets', $this->copy, true),
-        ));
-
-        Flux::toast(variant: 'success', text: 'Edição criada. Pagamentos realizados não foram copiados.');
-        $this->redirectRoute('events.show', $copy, navigate: true);
+        $this->ticketsGridExpanded = ! $this->ticketsGridExpanded;
     }
 
-    public function render(EventFinanceReader $reader, StatementBuilder $builder, EventAlerts $alerts): View
-    {
+    public function render(
+        EventFinanceReader $reader,
+        StatementBuilder $builder,
+        EventAlerts $alerts,
+        PlanningTimelineBuilder $planningTimeline,
+    ): View {
         $input = $reader->read($this->event);
         $statement = $builder->statement($input);
         $canFinance = auth()->user()->can('viewFinance', $this->event);
@@ -78,10 +56,17 @@ class EventOverview extends Component
 
         $tasks = $this->event->tasks()
             ->where('status', '!=', TaskStatus::Done)
+            ->orderByRaw("case priority when 'high' then 0 when 'medium' then 1 else 2 end")
             ->orderByRaw('due_on is null')
             ->orderBy('due_on')
-            ->limit(6)
+            ->limit(12)
             ->get();
+
+        $ticketTiers = $canFinance
+            ? $this->event->ticketTiers()->orderBy('sort_order')->get()
+            : collect();
+        $ticketsSold = (int) $ticketTiers->sum('sold_quantity');
+        $ticketsAvailable = (int) $ticketTiers->sum(fn ($tier): int => max(0, $tier->remaining()));
 
         $next = $this->event->scheduleItems()
             ->where(function ($query): void {
@@ -90,6 +75,12 @@ class EventOverview extends Component
             ->orderByRaw('starts_at is null')
             ->orderBy('starts_at')
             ->first();
+
+        $statusTone = match ($this->event->status) {
+            EventStatus::Live, EventStatus::OnSale => 'up',
+            EventStatus::Finished, EventStatus::Cancelled => 'down',
+            default => 'flat',
+        };
 
         return view('livewire.events.overview', [
             'statement' => $statement,
@@ -100,6 +91,15 @@ class EventOverview extends Component
             'next' => $next,
             'pendingTasks' => $this->event->tasks()->where('status', '!=', TaskStatus::Done)->count(),
             'lineupCount' => $this->event->bookings()->count(),
+            'statusTone' => $statusTone,
+            'teamMembers' => $this->event->members()->orderBy('name')->limit(6)->get(),
+            'teamMemberCount' => $this->event->members()->count(),
+            'canManageTeam' => auth()->user()->can('manageTeam', $this->event),
+            'teamRoles' => EventRole::cases(),
+            'planningTimeline' => $planningTimeline->build($this->event),
+            'ticketTiers' => $ticketTiers,
+            'ticketsSold' => $ticketsSold,
+            'ticketsAvailable' => $ticketsAvailable,
         ])->title($this->event->name);
     }
 }

@@ -4,10 +4,9 @@ namespace App\Livewire\Events;
 
 use App\Enums\EventRole;
 use App\Livewire\Concerns\InteractsWithEvent;
+use App\Livewire\Concerns\ManagesEventTeam;
 use App\Models\Event;
-use App\Models\User;
 use Flux\Flux;
-use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -16,6 +15,7 @@ use Livewire\Component;
 class TeamBoard extends Component
 {
     use InteractsWithEvent;
+    use ManagesEventTeam;
 
     public string $email = '';
 
@@ -28,26 +28,10 @@ class TeamBoard extends Component
 
     public function invite(): void
     {
-        $this->authorize('manageTeam', $this->event);
-        $this->validate([
-            'email' => ['required', 'email'],
-            'role' => ['required', Rule::enum(EventRole::class)],
-        ], [
-            'email.required' => 'Qual é o e-mail de quem vai entrar?',
-        ]);
-
-        $user = User::query()->where('email', mb_strtolower($this->email))->first();
-
-        if (! $user instanceof User) {
-            $this->addError('email', 'Essa pessoa ainda não tem conta no PartyOS.');
-
+        if (! $this->addEventMemberByEmail($this->email, $this->role, 'email')) {
             return;
         }
 
-        $this->event->members()->syncWithoutDetaching([
-            $user->id => ['role' => $this->role],
-        ]);
-        $this->event->members()->updateExistingPivot($user->id, ['role' => $this->role]);
         $this->reset('email');
         Flux::toast(variant: 'success', text: 'Pessoa adicionada ao evento.');
     }

@@ -11,6 +11,8 @@ use App\Enums\EventStatus;
 use App\Enums\EventType;
 use App\Enums\PaymentStatus;
 use App\Livewire\Events\EventForm;
+use App\Livewire\Events\EventOverview;
+use App\Livewire\Tasks\TaskBoard;
 use App\Livewire\Finance\BudgetBoard;
 use App\Models\Event;
 use App\Models\EventTemplate;
@@ -45,7 +47,7 @@ class EventPlanningTest extends TestCase
 
         $event = Event::query()->where('name', 'Festa X — Outubro')->first();
         $this->assertNotNull($event);
-        $this->assertTrue($event->tasks()->where('title', 'Definir o local')->exists());
+        $this->assertTrue($event->tasks()->where('title', 'Definir o local ou venue')->exists());
         $this->assertNotNull($event->budget);
         $this->assertTrue($user->can('manageFinance', $event));
     }
@@ -119,5 +121,83 @@ class EventPlanningTest extends TestCase
             ->set('estimated', '1000')
             ->call('save')
             ->assertHasErrors(['description']);
+    }
+
+    public function test_event_overview_ticket_grid_shows_sales_and_expands(): void
+    {
+        $user = User::factory()->create();
+        $event = app(CreateEvent::class)->handle($user, [
+            'name' => 'Festa ingressos',
+            'type' => EventType::Party,
+        ]);
+
+        $event->ticketTiers()->create([
+            'name' => '1º lote',
+            'price' => 5000,
+            'quantity' => 100,
+            'goal' => 80,
+            'sold_quantity' => 20,
+            'sort_order' => 1,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(EventOverview::class, ['event' => $event])
+            ->assertSee('Financeiro')
+            ->assertSee('20')
+            ->assertSee('/80')
+            ->call('toggleTicketsGrid')
+            ->assertSet('ticketsGridExpanded', true)
+            ->assertSee('Ir para o controle de ingressos')
+            ->assertSee('1º lote');
+    }
+
+    public function test_owner_can_add_team_member_from_event_overview(): void
+    {
+        $owner = User::factory()->create();
+        $collaborator = User::factory()->create(['email' => 'prod@example.com']);
+        $event = app(CreateEvent::class)->handle($owner, [
+            'name' => 'Festa equipe',
+            'type' => EventType::Party,
+        ]);
+
+        Livewire::actingAs($owner)
+            ->test(EventOverview::class, ['event' => $event])
+            ->call('openTeamModal')
+            ->set('teamInviteEmail', $collaborator->email)
+            ->set('teamInviteRole', 'production')
+            ->call('inviteTeamMember')
+            ->assertHasNoErrors();
+
+        $this->assertTrue(
+            $event->members()->whereKey($collaborator->id)->wherePivot('role', 'production')->exists()
+        );
+    }
+
+    public function test_task_notebook_supports_inline_create_and_edit(): void
+    {
+        $user = User::factory()->create();
+        $event = app(CreateEvent::class)->handle($user, [
+            'name' => 'Festa tarefas',
+            'type' => EventType::Party,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(TaskBoard::class, ['event' => $event])
+            ->set('newTaskTitle', 'Reservar venue')
+            ->call('createFromDraft')
+            ->assertHasNoErrors();
+
+        $task = $event->tasks()->where('title', 'Reservar venue')->first();
+        $this->assertNotNull($task);
+
+        Livewire::actingAs($user)
+            ->test(TaskBoard::class, ['event' => $event])
+            ->call('updateTaskTitle', $task->id, 'Reservar galpão')
+            ->call('updateTaskStatus', $task->id, 'doing')
+            ->call('toggleDone', $task->id);
+
+        $task->refresh();
+        $this->assertSame('Reservar galpão', $task->title);
+        $this->assertSame('done', $task->status->value);
     }
 }

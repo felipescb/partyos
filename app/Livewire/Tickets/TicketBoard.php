@@ -3,20 +3,34 @@
 namespace App\Livewire\Tickets;
 
 use App\Domain\Finance\Money;
+use App\Domain\Tickets\ApplyTicketSalesImport;
+use App\Domain\Tickets\ImportSoldTicketsFromShotgun;
+use App\Enums\TicketSalesPlatform;
 use App\Livewire\Concerns\InteractsWithEvent;
 use App\Models\Event;
 use App\Models\TicketTier;
 use Flux\Flux;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
-#[Layout('layouts.app')]
+#[Layout('layouts.app.dashboard')]
 class TicketBoard extends Component
 {
     use InteractsWithEvent;
+    use WithFileUploads;
 
     public bool $showForm = false;
+
+    public bool $showImportModal = false;
+
+    public string $importPlatform = 'shotgun';
+
+    /** @var \Livewire\Features\SupportFileUploads\TemporaryUploadedFile|null */
+    public $importFile = null;
 
     public ?int $editingId = null;
 
@@ -110,6 +124,67 @@ class TicketBoard extends Component
         Flux::toast(variant: 'success', text: 'Lote removido.');
     }
 
+    public function openImportModal(): void
+    {
+        $this->authorize('manageFinance', $this->event);
+        $this->resetValidation();
+        $this->importPlatform = TicketSalesPlatform::Shotgun->value;
+        $this->importFile = null;
+        $this->showImportModal = true;
+    }
+
+    public function closeImportModal(): void
+    {
+        $this->showImportModal = false;
+        $this->importFile = null;
+    }
+
+    public function importSold(
+        ImportSoldTicketsFromShotgun $shotgunImport,
+        ApplyTicketSalesImport $applyImport,
+    ): void {
+        $this->authorize('manageFinance', $this->event);
+
+        $this->validate([
+            'importPlatform' => ['required', Rule::enum(TicketSalesPlatform::class)],
+            'importFile' => ['required', 'file', 'mimes:csv,txt', 'max:8192'],
+        ], [
+            'importFile.required' => 'Escolha o CSV exportado da plataforma.',
+        ]);
+
+        $platform = TicketSalesPlatform::from($this->importPlatform);
+
+        if ($platform === TicketSalesPlatform::Gandaya) {
+            throw ValidationException::withMessages([
+                'importPlatform' => 'Importação Gandaya ainda não está disponível.',
+            ]);
+        }
+
+        try {
+            $imports = $shotgunImport->parse($this->importFile->getContent());
+        } catch (\InvalidArgumentException $exception) {
+            throw ValidationException::withMessages([
+                'importFile' => $exception->getMessage(),
+            ]);
+        }
+
+        $result = $applyImport->apply($this->event, $imports);
+
+        $this->closeImportModal();
+
+        $message = $result->totalTickets.' ingressos importados';
+
+        if ($result->tiersCreated > 0) {
+            $message .= ' · '.$result->tiersCreated.' lote(s) criado(s)';
+        }
+
+        if ($result->tiersUpdated > 0) {
+            $message .= ' · '.$result->tiersUpdated.' lote(s) atualizado(s)';
+        }
+
+        Flux::toast(variant: 'success', text: $message);
+    }
+
     public function render(): View
     {
         $tiers = $this->event->ticketTiers()->get();
@@ -120,6 +195,7 @@ class TicketBoard extends Component
             'sold' => (int) $tiers->sum('sold_quantity'),
             'goal' => (int) $tiers->sum('goal'),
             'revenue' => (int) $tiers->sum(fn (TicketTier $tier): int => $tier->revenue()),
+            'importPlatforms' => TicketSalesPlatform::cases(),
         ])->title('Ingressos · '.$this->event->name);
     }
 

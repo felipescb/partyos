@@ -1,36 +1,87 @@
-<div class="flex flex-col gap-5">
-    <div class="flex flex-wrap items-end justify-between gap-3">
-        <div>
-            <flux:heading size="xl">Ingressos</flux:heading>
-            <flux:text>A meta de cada lote alimenta a receita prevista e o ponto de empate. O vendido é o que já aconteceu.</flux:text>
+<div class="broker-tickets-page">
+    <header class="broker-tickets-head">
+        <div class="broker-tickets-head-main">
+            <a href="{{ route('events.show', $event) }}" wire:navigate class="broker-task-notebook-back">← Quadro</a>
+            <div>
+                <x-event-category-symbol category="financeiro" />
+                <h1 class="broker-tickets-title">Ingressos</h1>
+                <p class="broker-tickets-sub">{{ $event->name }} · meta e vendido alimentam receita e empate</p>
+            </div>
         </div>
         @if ($canEdit)
-            <flux:button variant="primary" wire:click="create">Novo lote</flux:button>
+            <div class="broker-tickets-head-actions broker-card-actions">
+                <button
+                    type="button"
+                    class="broker-card-icon-btn"
+                    wire:click="openImportModal"
+                    aria-label="Importar vendidos"
+                    title="Importar vendidos"
+                >
+                    <flux:icon.arrow-up-tray variant="mini" class="size-4" />
+                </button>
+                <button
+                    type="button"
+                    class="broker-card-icon-btn"
+                    wire:click="create"
+                    aria-label="Novo ingresso"
+                    title="Novo ingresso"
+                >
+                    <flux:icon.plus variant="mini" class="size-4" />
+                </button>
+            </div>
         @endif
+    </header>
+
+    <div class="broker-grid broker-grid-tickets" role="list" aria-label="Ingressos do evento">
+        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="financeiro" />
+            <span class="broker-card-name">Vendidos</span>
+            <span class="broker-card-quote">{{ $sold }}</span>
+            <span class="broker-card-foot">Ingressos confirmados</span>
+        </article>
+        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="financeiro" />
+            <span class="broker-card-name">Meta</span>
+            <span class="broker-card-quote">{{ $goal }}</span>
+            <span class="broker-card-foot">Soma das metas dos lotes</span>
+        </article>
+        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="financeiro" />
+            <span class="broker-card-name">Receita</span>
+            <span class="broker-card-quote"><x-money :cents="$revenue" :currency="$event->currency" /></span>
+            <span class="broker-card-foot">Preço × vendidos</span>
+        </article>
+
+        <x-event-ticket-list
+            :event="$event"
+            :tiers="$tiers"
+            :can-edit="$canEdit"
+            class="broker-grid-item broker-ticket-list-full"
+        />
     </div>
-    <section class="tile-grid">
-        <x-tile as="div" size="sm"><span class="tile-kicker">Vendidos</span><span class="tile-value">{{ $sold }}</span></x-tile>
-        <x-tile as="div" size="sm"><span class="tile-kicker">Meta</span><span class="tile-value">{{ $goal }}</span></x-tile>
-        <x-tile as="div" size="sm"><span class="tile-kicker">Receita gerada</span><span class="tile-value"><x-money :cents="$revenue" :currency="$event->currency" /></span></x-tile>
-    </section>
-    @if ($tiers->isEmpty())
-        <x-empty-state title="Nenhum lote ainda." body="Pré-venda, primeiro lote, porta. Sem isso o PartyOS não sabe quantas pessoas você precisa vender.">
-            @if ($canEdit)
-                <flux:button variant="primary" wire:click="create">Criar lote</flux:button>
+
+    <flux:modal wire:model="showImportModal" class="max-w-lg">
+        <form wire:submit="importSold" class="space-y-4">
+            <flux:heading size="lg">Importar vendidos</flux:heading>
+            <flux:text>Envie o CSV da plataforma. Lotes que não existirem no evento serão criados; os vendidos serão atualizados conforme o arquivo.</flux:text>
+            <flux:select wire:model.live="importPlatform" label="Plataforma">
+                @foreach ($importPlatforms as $platform)
+                    <flux:select.option value="{{ $platform->value }}">{{ $platform->label() }}</flux:select.option>
+                @endforeach
+            </flux:select>
+            <flux:input wire:model="importFile" type="file" label="Arquivo CSV" accept=".csv,text/csv,text/plain" />
+            @if ($importPlatform === 'shotgun')
+                <flux:text class="text-sm text-steel">Shotgun: exporte pedidos válidos (colunas DEAL TITLE, STATUS, CLIENT PRICE).</flux:text>
             @endif
-        </x-empty-state>
-    @else
-        <div class="tile-grid">
-            @foreach ($tiers as $tier)
-                <x-tile type="button" wire:click="edit({{ $tier->id }})" size="lg">
-                    <span class="tile-kicker">{{ $tier->sold_quantity }} vendidos · meta {{ $tier->goal }}</span>
-                    <span class="tile-title">{{ $tier->name }}</span>
-                    <span class="tile-value"><x-money :cents="$tier->price" :currency="$event->currency" /></span>
-                    <span class="tile-meta">Receita <x-money :cents="$tier->revenue()" :currency="$event->currency" /> · restam {{ $tier->remaining() }}</span>
-                </x-tile>
-            @endforeach
-        </div>
-    @endif
+            <flux:error name="importPlatform" />
+            <flux:error name="importFile" />
+            <div class="flex justify-end gap-2">
+                <flux:button type="button" wire:click="closeImportModal">Cancelar</flux:button>
+                <flux:button variant="primary" type="submit">Importar</flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
     <flux:modal wire:model="showForm" class="max-w-lg">
         <form wire:submit="save" class="space-y-4">
             <flux:heading size="lg">{{ $editingId ? 'Editar lote' : 'Novo lote' }}</flux:heading>

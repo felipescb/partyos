@@ -4,6 +4,7 @@ use App\Livewire\Artists\ArtistDirectory;
 use App\Livewire\Artists\LineupBoard;
 use App\Livewire\Events\CloseBoard;
 use App\Livewire\Events\EventForm;
+use App\Livewire\Events\PickEventTemplate;
 use App\Livewire\Events\EventOverview;
 use App\Livewire\Events\ScheduleBoard;
 use App\Livewire\Events\TeamBoard;
@@ -26,7 +27,8 @@ Route::get('/', [AuthenticatedSessionController::class, 'create'])
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', Portfolio::class)->name('dashboard');
-    Route::get('eventos/novo', EventForm::class)->name('events.create');
+    Route::get('eventos/novo', PickEventTemplate::class)->name('events.create');
+    Route::get('eventos/novo/configurar', EventForm::class)->name('events.create.configure');
     Route::get('fornecedores', VendorDirectory::class)->name('vendors.index');
     Route::get('artistas', ArtistDirectory::class)->name('artists.index');
 

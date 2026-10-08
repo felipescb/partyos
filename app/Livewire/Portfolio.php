@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\DuplicatesEvents;
 use App\Domain\Events\OfficialCatalog;
 use App\Domain\Finance\EventFinanceReader;
 use App\Domain\Finance\StatementBuilder;
@@ -15,6 +16,8 @@ use Livewire\Component;
 #[Title('Meus eventos')]
 class Portfolio extends Component
 {
+    use DuplicatesEvents;
+
     public function render(EventFinanceReader $reader, StatementBuilder $builder): View
     {
         OfficialCatalog::ensure();
