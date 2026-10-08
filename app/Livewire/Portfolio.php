@@ -1,0 +1,68 @@
+<?php
+
+namespace App\Livewire;
+
+use App\Domain\Events\OfficialCatalog;
+use App\Domain\Finance\EventFinanceReader;
+use App\Domain\Finance\StatementBuilder;
+use App\Models\Event;
+use Illuminate\View\View;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+
+#[Layout('layouts.app')]
+#[Title('Meus eventos')]
+class Portfolio extends Component
+{
+    public string $filter = 'active';
+
+    public function render(EventFinanceReader $reader, StatementBuilder $builder): View
+    {
+        OfficialCatalog::ensure();
+
+        $events = Event::query()
+            ->where('organization_id', auth()->user()->current_organization_id)
+            ->with(['ticketTiers', 'revenues', 'fees', 'distributions', 'budgetItems.payments', 'budgetItems.category', 'budgetItems.vendor', 'guests'])
+            ->orderByRaw('starts_at is null')
+            ->orderBy('starts_at')
+            ->limit(100)
+            ->get();
+
+        $rows = $events->map(function (Event $event) use ($reader, $builder): array {
+            return [
+                'event' => $event,
+                'statement' => $builder->statement($reader->read($event)),
+            ];
+        });
+
+        $visible = $rows->filter(function (array $row): bool {
+            $status = $row['event']->status->value;
+
+            return match ($this->filter) {
+                'finished' => $status === 'finished',
+                'all' => true,
+                default => ! in_array($status, ['finished', 'cancelled'], true),
+            };
+        })->values();
+
+        $history = $rows->reject(fn (array $row): bool => $row['event']->status->value === 'cancelled');
+        $gross = (int) $history->sum(fn (array $row): int => $row['statement']->actualGross);
+        $costs = (int) $history->sum(fn (array $row): int => $row['statement']->committedCosts);
+        $profit = (int) $history->sum(fn (array $row): int => $row['statement']->currentResult);
+        $people = (int) $history->sum(fn (array $row): int => $row['statement']->ticketsSold + $row['statement']->confirmedGuestHeads);
+
+        return view('livewire.portfolio', [
+            'rows' => $visible,
+            'totals' => [
+                'events' => $history->count(),
+                'gross' => $gross,
+                'costs' => $costs,
+                'profit' => $profit,
+                'margin' => $gross > 0 ? intdiv($profit * 10000, $gross) : null,
+                'people' => $people,
+                'averageTicket' => $people > 0 ? intdiv($gross, $people) : null,
+            ],
+        ]);
+    }
+}
