@@ -64,7 +64,7 @@
             <x-tile :href="route('events.tickets', $event)" size="lg">
                 <span class="tile-kicker">Dinheiro</span>
                 <span class="tile-title">Ingressos</span>
-                <span class="tile-value">{{ $statement->ticketsSold }}<span class="text-xl text-zinc-500">/{{ $statement->ticketsGoal }}</span></span>
+                <span class="tile-value">{{ $statement->ticketsSold }}<span class="text-xl text-silver">/{{ $statement->ticketsGoal }}</span></span>
                 <span class="tile-meta">Vendidos na meta · <x-money :cents="$statement->actualTicketRevenue" :currency="$event->currency" /></span>
             </x-tile>
             <x-tile :href="route('events.revenues', $event)">

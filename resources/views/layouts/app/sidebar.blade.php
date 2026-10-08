@@ -16,7 +16,7 @@
                 <flux:menu>
                     <div class="px-2 py-1.5 text-sm">
                         <p class="font-medium">{{ auth()->user()->name }}</p>
-                        <p class="text-zinc-500">{{ auth()->user()->email }}</p>
+                        <p class="text-steel">{{ auth()->user()->email }}</p>
                     </div>
                     <flux:menu.separator />
                     <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>{{ __('Settings') }}</flux:menu.item>

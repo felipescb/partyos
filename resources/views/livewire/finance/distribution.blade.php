@@ -10,11 +10,11 @@
                 <div class="mt-3 flex items-center justify-between text-sm">
                     <span>{{ $fee->name }} · {{ $bases[$fee->applies_to === 'category' ? $fee->revenue_category : $fee->applies_to] ?? $fee->applies_to }} · {{ $fee->kind->value === 'percent' ? \App\Domain\Finance\Money::formatPercent($fee->basis_points ?? 0) : '' }}@if($fee->kind->value === 'fixed')<x-money :cents="$fee->amount ?? 0" :currency="$event->currency" />@endif</span>
                     @if ($canEdit)
-                        <button type="button" wire:click="deleteFee({{ $fee->id }})" class="text-zinc-500 underline">Remover</button>
+                        <button type="button" wire:click="deleteFee({{ $fee->id }})" class="font-medium text-brand underline">Remover</button>
                     @endif
                 </div>
             @empty
-                <p class="mt-2 text-sm text-zinc-500">Nenhuma taxa. Bilheteria de plataforma, por exemplo, entra aqui.</p>
+                <p class="mt-2 text-base text-steel">Nenhuma taxa. Bilheteria de plataforma, por exemplo, entra aqui.</p>
             @endforelse
             @if ($canEdit)
                 <form wire:submit="addFee" class="mt-4 space-y-3">
@@ -41,11 +41,11 @@
                 <div class="mt-3 flex items-center justify-between text-sm">
                     <span>{{ $share->beneficiary_name }} · {{ $bases[$share->applies_to === 'category' ? $share->revenue_category : $share->applies_to] ?? $share->applies_to }} · {{ $share->kind->value === 'percent' ? \App\Domain\Finance\Money::formatPercent($share->basis_points ?? 0) : '' }}@if($share->kind->value === 'fixed')<x-money :cents="$share->amount ?? 0" :currency="$event->currency" />@endif</span>
                     @if ($canEdit)
-                        <button type="button" wire:click="deleteShare({{ $share->id }})" class="text-zinc-500 underline">Remover</button>
+                        <button type="button" wire:click="deleteShare({{ $share->id }})" class="font-medium text-brand underline">Remover</button>
                     @endif
                 </div>
             @empty
-                <p class="mt-2 text-sm text-zinc-500">Nenhuma divisão. Exemplo: 25% da bilheteria para a casa, 75% para a produção.</p>
+                <p class="mt-2 text-base text-steel">Nenhuma divisão. Exemplo: 25% da bilheteria para a casa, 75% para a produção.</p>
             @endforelse
             @if ($canEdit)
                 <form wire:submit="addShare" class="mt-4 space-y-3">

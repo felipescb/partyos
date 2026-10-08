@@ -36,7 +36,7 @@
     @endif
 
     @if ($scenarioId && $canEdit)
-        <form wire:submit="save" class="space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
+        <form wire:submit="save" class="space-y-4 rounded-2xl border border-line bg-canvas p-4 shadow-whisper">
             <flux:heading size="lg">Ajustar cenário</flux:heading>
             <div class="flex flex-wrap items-end gap-3">
                 <flux:input wire:model="attendance" type="number" min="0" label="Público" class="max-w-xs" />

@@ -93,7 +93,7 @@
         </form>
 
         @if ($editingId)
-            <div class="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+            <div class="mt-6 border-t border-line pt-4">
                 <flux:heading>Pagamentos</flux:heading>
                 @forelse ($editingPayments as $payment)
                     <div class="mt-2 flex items-center justify-between text-sm">
@@ -101,12 +101,12 @@
                         <span class="flex items-center gap-3">
                             <x-money :cents="$payment->amount" :currency="$event->currency" />
                             @if ($canEdit)
-                                <button type="button" wire:click="removePayment({{ $payment->id }})" class="text-zinc-500 underline">Remover</button>
+                                <button type="button" wire:click="removePayment({{ $payment->id }})" class="font-medium text-brand underline">Remover</button>
                             @endif
                         </span>
                     </div>
                 @empty
-                    <p class="mt-2 text-sm text-zinc-500">Nenhum pagamento. O valor pago da linha é a soma daqui.</p>
+                    <p class="mt-2 text-base text-steel">Nenhum pagamento. O valor pago da linha é a soma daqui.</p>
                 @endforelse
                 @if ($canEdit)
                     <div class="mt-3 grid gap-3 md:grid-cols-4">
