@@ -3441,6 +3441,61 @@ a.broker-card-alert:hover {
     align-items: center;
 }
 
+.broker-lineup-sort {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.25rem;
+    width: fit-content;
+    max-width: 100%;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+}
+
+.broker-lineup-sort-active {
+    color: var(--color-ink);
+}
+
+.broker-lineup-status {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    padding: 0.12rem 0.4rem;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.3;
+    text-transform: uppercase;
+}
+
+.broker-lineup-status-inquiry {
+    background: var(--broker-cat-equipe-soft);
+    color: var(--broker-cat-equipe-ink);
+}
+
+.broker-lineup-status-negotiating {
+    background: var(--broker-cat-olhar-soft);
+    color: var(--broker-cat-olhar-ink);
+}
+
+.broker-lineup-status-confirmed {
+    background: var(--broker-cat-ao-vivo-soft);
+    color: var(--broker-cat-ao-vivo-ink);
+}
+
+.broker-lineup-status-cancelled {
+    background: var(--broker-cat-atencao-soft);
+    color: var(--broker-cat-atencao-ink);
+}
+
 .broker-vendor-toolbar {
     display: flex;
     flex-wrap: wrap;
@@ -3560,6 +3615,12 @@ a.broker-card-alert:hover {
 
     .broker-ticket-cell-window .broker-ticket-sub {
         white-space: normal;
+    }
+
+    .broker-lineup-columns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.65rem;
     }
 }
 

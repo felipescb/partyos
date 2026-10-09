@@ -49,11 +49,20 @@
                 />
             </header>
 
-            <div class="broker-lineup-columns" aria-hidden="true">
-                <span>Nome</span>
-                <span>Status</span>
-                <span>Cachê</span>
-                <span>Horário</span>
+            <div class="broker-lineup-columns">
+                @foreach (['name' => 'Nome', 'status' => 'Status', 'fee' => 'Cachê', 'time' => 'Horário'] as $column => $label)
+                    <button
+                        type="button"
+                        wire:click="sortBy('{{ $column }}')"
+                        @class(['broker-lineup-sort', 'broker-lineup-sort-active' => $sort === $column])
+                        aria-sort="{{ $sort === $column ? ($direction === 'asc' ? 'ascending' : 'descending') : 'none' }}"
+                    >
+                        {{ $label }}
+                        @if ($sort === $column)
+                            <span aria-hidden="true">{{ $direction === 'asc' ? '↑' : '↓' }}</span>
+                        @endif
+                    </button>
+                @endforeach
             </div>
 
             <div class="broker-ticket-list" role="list" aria-label="{{ $activeListLabel }}">
@@ -69,7 +78,7 @@
                             @endif
                         </div>
                         <div class="broker-ticket-cell">
-                            <span class="broker-ticket-sub">{{ $booking->status->label() }}</span>
+                            <span @class(['broker-lineup-status', 'broker-lineup-status-'.$booking->status->value])>{{ $booking->status->label() }}</span>
                         </div>
                         <div class="broker-ticket-cell">
                             @if ($booking->budgetItem)

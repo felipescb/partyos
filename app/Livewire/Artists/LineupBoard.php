@@ -26,6 +26,10 @@ class LineupBoard extends Component
 
     public string $search = '';
 
+    public string $sort = 'name';
+
+    public string $direction = 'asc';
+
     public bool $showForm = false;
 
     public ?int $editingId = null;
@@ -54,6 +58,20 @@ class LineupBoard extends Component
     {
         abort_unless(in_array($list, $this->listKeys(), true), 404);
         $this->list = $list;
+    }
+
+    public function sortBy(string $column): void
+    {
+        abort_unless(in_array($column, ['name', 'status', 'fee', 'time'], true), 404);
+
+        if ($this->sort === $column) {
+            $this->direction = $this->direction === 'asc' ? 'desc' : 'asc';
+
+            return;
+        }
+
+        $this->sort = $column;
+        $this->direction = 'asc';
     }
 
     public function create(): void
@@ -159,9 +177,7 @@ class LineupBoard extends Component
 
     public function render(): View
     {
-        $bookings = $this->event->bookings()->with(['artist', 'budgetItem'])->get()
-            ->sortBy(fn (Booking $booking): string => $booking->artist->stage_name)
-            ->values();
+        $bookings = $this->event->bookings()->with(['artist', 'budgetItem'])->get();
 
         return view('livewire.artists.lineup', [
             'bookings' => $this->visibleBookings($bookings),
@@ -185,7 +201,70 @@ class LineupBoard extends Component
                 $term = mb_strtolower($this->search);
 
                 return $rows->filter(fn (Booking $booking): bool => str_contains(mb_strtolower($booking->artist->stage_name), $term))->values();
-            });
+            })
+            ->pipe(fn (Collection $rows): Collection => $this->sortedBookings($rows));
+    }
+
+    /**
+     * @param  Collection<int, Booking>  $bookings
+     * @return Collection<int, Booking>
+     */
+    private function sortedBookings(Collection $bookings): Collection
+    {
+        $descending = $this->direction === 'desc';
+
+        return $bookings->sort(function (Booking $left, Booking $right) use ($descending): int {
+            $result = match ($this->sort) {
+                'status' => $this->statusRank($left) <=> $this->statusRank($right),
+                'fee' => $this->bookingFee($left) <=> $this->bookingFee($right),
+                'time' => $this->compareTime($left, $right, $descending),
+                default => strcmp(mb_strtolower($left->artist->stage_name), mb_strtolower($right->artist->stage_name)),
+            };
+
+            if ($this->sort !== 'time' && $descending) {
+                $result = -$result;
+            }
+
+            if ($result === 0) {
+                $result = strcmp(mb_strtolower($left->artist->stage_name), mb_strtolower($right->artist->stage_name));
+            }
+
+            return $result;
+        })->values();
+    }
+
+    private function statusRank(Booking $booking): int
+    {
+        return match ($booking->status) {
+            BookingStatus::Inquiry => 0,
+            BookingStatus::Negotiating => 1,
+            BookingStatus::Confirmed => 2,
+            BookingStatus::Cancelled => 3,
+        };
+    }
+
+    private function bookingFee(Booking $booking): int
+    {
+        return $booking->budgetItem?->committedAmount() ?? 0;
+    }
+
+    private function compareTime(Booking $left, Booking $right, bool $descending): int
+    {
+        if ($left->starts_at === null && $right->starts_at === null) {
+            return 0;
+        }
+
+        if ($left->starts_at === null) {
+            return 1;
+        }
+
+        if ($right->starts_at === null) {
+            return -1;
+        }
+
+        $result = $left->starts_at <=> $right->starts_at;
+
+        return $descending ? -$result : $result;
     }
 
     /**

@@ -53,7 +53,9 @@ class LineupBoardTest extends TestCase
             ->assertSee('Consulta')
             ->assertDontSee("selectList('negotiating')", false)
             ->assertSee('DJ Lia')
-            ->assertSee('Nico');
+            ->assertSee('Nico')
+            ->assertSee('broker-lineup-status-confirmed', false)
+            ->assertSee('broker-lineup-status-inquiry', false);
 
         Livewire::actingAs($user)
             ->test(LineupBoard::class, ['event' => $event])
@@ -62,6 +64,60 @@ class LineupBoardTest extends TestCase
             ->assertDontSee('Editar Nico', false)
             ->call('create')
             ->assertSet('status', 'confirmed');
+    }
+
+    public function test_the_lineup_table_sorts_by_column(): void
+    {
+        $user = User::factory()->create();
+        $event = app(CreateEvent::class)->handle($user, [
+            'name' => 'Festa da casa',
+            'type' => EventType::Party,
+            'status' => EventStatus::Planning,
+        ]);
+        $lia = Artist::query()->create([
+            'organization_id' => $event->organization_id,
+            'stage_name' => 'DJ Lia',
+        ]);
+        $nico = Artist::query()->create([
+            'organization_id' => $event->organization_id,
+            'stage_name' => 'Nico',
+        ]);
+        $liaItem = $event->budgetItems()->create([
+            'budget_id' => $event->budget->id,
+            'description' => 'Cachê Lia',
+            'estimated_amount' => 500000,
+            'contracted_amount' => 500000,
+        ]);
+        $nicoItem = $event->budgetItems()->create([
+            'budget_id' => $event->budget->id,
+            'description' => 'Cachê Nico',
+            'estimated_amount' => 100000,
+            'contracted_amount' => 100000,
+        ]);
+        $event->bookings()->create([
+            'artist_id' => $lia->id,
+            'budget_item_id' => $liaItem->id,
+            'status' => BookingStatus::Confirmed,
+            'starts_at' => '2026-11-28 23:00:00',
+        ]);
+        $event->bookings()->create([
+            'artist_id' => $nico->id,
+            'budget_item_id' => $nicoItem->id,
+            'status' => BookingStatus::Inquiry,
+            'starts_at' => '2026-11-28 02:00:00',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(LineupBoard::class, ['event' => $event])
+            ->assertSeeInOrder(['Editar DJ Lia', 'Editar Nico'], false)
+            ->call('sortBy', 'fee')
+            ->assertSeeInOrder(['Editar Nico', 'Editar DJ Lia'], false)
+            ->call('sortBy', 'fee')
+            ->assertSeeInOrder(['Editar DJ Lia', 'Editar Nico'], false)
+            ->call('sortBy', 'time')
+            ->assertSeeInOrder(['Editar Nico', 'Editar DJ Lia'], false)
+            ->call('sortBy', 'status')
+            ->assertSeeInOrder(['Editar Nico', 'Editar DJ Lia'], false);
     }
 
     public function test_a_new_booking_uses_the_event_date(): void
