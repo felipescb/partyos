@@ -51,8 +51,10 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
+COPY --from=vendor /app/vendor ./vendor
 
-RUN npm run build
+RUN mkdir -p vendor/livewire/flux-pro/stubs \
+    && npm run build
 
 FROM php-base AS runtime
 
