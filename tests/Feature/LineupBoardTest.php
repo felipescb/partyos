@@ -63,4 +63,35 @@ class LineupBoardTest extends TestCase
             ->call('create')
             ->assertSet('status', 'confirmed');
     }
+
+    public function test_a_new_booking_uses_the_event_date(): void
+    {
+        $user = User::factory()->create();
+        $event = app(CreateEvent::class)->handle($user, [
+            'name' => 'Festa da casa',
+            'type' => EventType::Party,
+            'status' => EventStatus::Planning,
+            'starts_at' => '2026-11-28 22:00:00',
+            'ends_at' => '2026-11-29 06:00:00',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(LineupBoard::class, ['event' => $event])
+            ->call('create')
+            ->assertSet('startsAt', '2026-11-28T22:00')
+            ->assertSet('endsAt', '2026-11-29T06:00');
+
+        $open = app(CreateEvent::class)->handle($user, [
+            'name' => 'Festa sem término',
+            'type' => EventType::Party,
+            'status' => EventStatus::Planning,
+            'starts_at' => '2026-12-05 00:00:00',
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(LineupBoard::class, ['event' => $open])
+            ->call('create')
+            ->assertSet('startsAt', '2026-12-05T00:00')
+            ->assertSet('endsAt', '2026-12-05T00:00');
+    }
 }

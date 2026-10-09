@@ -65,6 +65,7 @@ class LineupBoard extends Component
             $this->status = $this->list;
         }
 
+        $this->presetSchedule();
         $this->showForm = true;
     }
 
@@ -256,6 +257,18 @@ class LineupBoard extends Component
     private function booking(int $id): Booking
     {
         return $this->event->bookings()->with('budgetItem')->findOrFail($id);
+    }
+
+    private function presetSchedule(): void
+    {
+        $starts = $this->event->starts_at;
+
+        if ($starts === null) {
+            return;
+        }
+
+        $this->startsAt = $starts->format('Y-m-d\TH:i');
+        $this->endsAt = ($this->event->ends_at ?? $starts)->format('Y-m-d\TH:i');
     }
 
     private function resetForm(): void
