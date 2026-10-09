@@ -5,15 +5,22 @@ namespace App\Livewire\Artists;
 use App\Domain\Finance\Money;
 use App\Models\Artist;
 use Flux\Flux;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Layout('layouts.app')]
-#[Title('Artistas')]
+#[Layout('layouts.app.dashboard')]
 class ArtistDirectory extends Component
 {
+    public string $list = 'all';
+
+    public string $work = 'all';
+
+    public string $contact = 'all';
+
+    public string $search = '';
+
     public bool $showForm = false;
 
     public ?int $editingId = null;
@@ -40,11 +47,14 @@ class ArtistDirectory extends Component
 
     public string $notes = '';
 
-    public string $search = '';
-
     public function create(): void
     {
         $this->resetForm();
+
+        if ($this->list !== 'all' && $this->list !== 'none') {
+            $this->agency = $this->list;
+        }
+
         $this->showForm = true;
     }
 
@@ -113,6 +123,7 @@ class ArtistDirectory extends Component
     {
         $this->artist($id)->delete();
         $this->showForm = false;
+        Flux::toast(variant: 'success', text: 'Artista removido. O histórico dos eventos permanece nos bookings.');
     }
 
     public function render(): View
@@ -120,13 +131,109 @@ class ArtistDirectory extends Component
         $artists = Artist::query()
             ->where('organization_id', auth()->user()->current_organization_id)
             ->with(['bookings.event', 'bookings.budgetItem'])
-            ->when($this->search !== '', fn ($query) => $query->where('stage_name', 'like', '%'.$this->search.'%'))
             ->orderBy('stage_name')
             ->get();
 
+        $scoped = $this->scoped($artists);
+
         return view('livewire.artists.directory', [
-            'artists' => $artists,
-        ]);
+            'artists' => $this->visible($scoped),
+            'lists' => $this->lists($scoped),
+            'activeListLabel' => $this->activeListLabel(),
+        ])->title('Artistas');
+    }
+
+    /**
+     * @param  Collection<int, Artist>  $artists
+     * @return Collection<int, Artist>
+     */
+    private function scoped(Collection $artists): Collection
+    {
+        return $artists
+            ->when($this->work === 'booked', fn (Collection $rows): Collection => $rows->filter(fn (Artist $artist): bool => $artist->bookings->isNotEmpty())->values())
+            ->when($this->work === 'idle', fn (Collection $rows): Collection => $rows->filter(fn (Artist $artist): bool => $artist->bookings->isEmpty())->values())
+            ->when($this->contact === 'phone', fn (Collection $rows): Collection => $rows->filter(fn (Artist $artist): bool => filled($artist->phone))->values())
+            ->when($this->contact === 'email', fn (Collection $rows): Collection => $rows->filter(fn (Artist $artist): bool => filled($artist->email))->values())
+            ->when($this->contact === 'missing', fn (Collection $rows): Collection => $rows->filter(fn (Artist $artist): bool => blank($artist->phone) && blank($artist->email))->values());
+    }
+
+    /**
+     * @param  Collection<int, Artist>  $artists
+     * @return Collection<int, Artist>
+     */
+    private function visible(Collection $artists): Collection
+    {
+        return $artists
+            ->when($this->list === 'none', fn (Collection $rows): Collection => $rows->filter(fn (Artist $artist): bool => blank($artist->agency))->values())
+            ->when($this->list !== 'all' && $this->list !== 'none', fn (Collection $rows): Collection => $rows->where('agency', $this->list)->values())
+            ->when($this->search !== '', function (Collection $rows): Collection {
+                $term = mb_strtolower($this->search);
+
+                return $rows->filter(function (Artist $artist) use ($term): bool {
+                    $haystack = mb_strtolower(implode(' ', array_filter([
+                        $artist->stage_name,
+                        $artist->legal_name,
+                        $artist->email,
+                        $artist->phone,
+                        $artist->instagram,
+                        $artist->agency,
+                    ])));
+
+                    return str_contains($haystack, $term);
+                })->values();
+            });
+    }
+
+    /**
+     * @param  Collection<int, Artist>  $artists
+     * @return list<array{key: string, label: string, count: int}>
+     */
+    private function lists(Collection $artists): array
+    {
+        $lists = [[
+            'key' => 'all',
+            'label' => 'Todos',
+            'count' => $artists->count(),
+        ]];
+
+        $agencies = $artists
+            ->map(fn (Artist $artist): string => $artist->agency ?: '')
+            ->unique()
+            ->sort()
+            ->values();
+
+        foreach ($agencies as $agency) {
+            if ($agency === '') {
+                continue;
+            }
+
+            $lists[] = [
+                'key' => $agency,
+                'label' => $agency,
+                'count' => $artists->where('agency', $agency)->count(),
+            ];
+        }
+
+        $unassigned = $artists->filter(fn (Artist $artist): bool => blank($artist->agency));
+
+        if ($unassigned->isNotEmpty()) {
+            $lists[] = [
+                'key' => 'none',
+                'label' => 'Sem agência',
+                'count' => $unassigned->count(),
+            ];
+        }
+
+        return $lists;
+    }
+
+    private function activeListLabel(): string
+    {
+        return match ($this->list) {
+            'all' => 'Todos os artistas',
+            'none' => 'Sem agência',
+            default => $this->list,
+        };
     }
 
     private function artist(int $id): Artist

@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
@@ -66,6 +67,15 @@ class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
     use HasFactory, SoftDeletes;
+
+    public function coverUrl(): ?string
+    {
+        if (blank($this->cover_path)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->cover_path);
+    }
 
     public function getRouteKeyName(): string
     {

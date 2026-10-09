@@ -58,6 +58,9 @@
             <div class="tile-strip-bar">
                 <x-event-nav :event="$headerEvent" />
             </div>
+        @endif
+
+        @unless ($headerEvent && request()->routeIs('events.show'))
             <nav class="tile-dock" aria-label="Produtora">
                 <x-tile :href="route('dashboard')" size="sm" :current="request()->routeIs('dashboard')">
                     <span class="tile-kicker">Casa</span>
@@ -76,7 +79,7 @@
                     <span class="tile-title">Novo</span>
                 </x-tile>
             </nav>
-        @endif
+        @endunless
 
         @persist('toast')
             <flux:toast.group>

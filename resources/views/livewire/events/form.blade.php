@@ -104,9 +104,16 @@
                         <flux:description>JPG, PNG ou WebP · até 12 MB.</flux:description>
                         <flux:error name="cover" />
                         <flux:error name="files.0" />
-                        @if ($cover)
+                        <div wire:loading wire:target="cover" class="broker-cover-status">Enviando a capa…</div>
+                        @if ($preview = $this->coverPreviewUrl())
+                            <img src="{{ $preview }}" alt="Prévia da capa" class="broker-cover-preview" />
                             <div class="mt-2">
                                 <flux:button type="button" size="sm" variant="ghost" wire:click="clearCover">Remover capa</flux:button>
+                            </div>
+                        @elseif ($editing?->coverUrl())
+                            <img src="{{ $editing->coverUrl() }}" alt="Capa de {{ $editing->name }}" class="broker-cover-preview" />
+                            <div class="mt-2">
+                                <flux:button type="button" size="sm" variant="ghost" wire:click="removeSavedCover">Remover capa</flux:button>
                             </div>
                         @endif
                     </flux:field>
@@ -217,9 +224,16 @@
                         <flux:description>JPG, PNG ou WebP · até 12 MB. Pode criar o evento sem capa.</flux:description>
                         <flux:error name="cover" />
                         <flux:error name="files.0" />
-                        @if ($cover)
+                        <div wire:loading wire:target="cover" class="broker-cover-status">Enviando a capa…</div>
+                        @if ($preview = $this->coverPreviewUrl())
+                            <img src="{{ $preview }}" alt="Prévia da capa" class="broker-cover-preview" />
                             <div class="mt-2">
                                 <flux:button type="button" size="sm" variant="ghost" wire:click="clearCover">Remover capa</flux:button>
+                            </div>
+                        @elseif ($editing?->coverUrl())
+                            <img src="{{ $editing->coverUrl() }}" alt="Capa de {{ $editing->name }}" class="broker-cover-preview" />
+                            <div class="mt-2">
+                                <flux:button type="button" size="sm" variant="ghost" wire:click="removeSavedCover">Remover capa</flux:button>
                             </div>
                         @endif
                     </flux:field>

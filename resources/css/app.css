@@ -1280,6 +1280,30 @@ a.broker-card:hover {
     padding: 0.65rem 0.75rem;
 }
 
+.broker-cover-preview,
+.broker-event-cover {
+    display: block;
+    width: 100%;
+    object-fit: cover;
+    border: 1px solid var(--color-line);
+}
+
+.broker-cover-preview {
+    max-height: 9rem;
+    margin-top: 0.35rem;
+}
+
+.broker-event-cover {
+    height: 7.5rem;
+    margin: 0.15rem 0 0.35rem;
+}
+
+.broker-cover-status {
+    margin-top: 0.35rem;
+    font-size: 12px;
+    color: var(--color-steel);
+}
+
 .broker-card-hero-body {
     display: flex;
     flex-direction: column;
@@ -3376,12 +3400,147 @@ a.broker-card-alert:hover {
     pointer-events: auto;
 }
 
+.broker-grid-guests > button.broker-guest-list,
+.broker-grid-lineup > button.broker-guest-list {
+    width: 100%;
+    height: 100%;
+    padding: 0.65rem 0.75rem 0.6rem;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.broker-guest-list-current {
+    border-color: var(--color-brand);
+}
+
+.broker-guest-search {
+    width: min(16rem, 100%);
+    height: 2rem;
+    padding: 0 0.6rem;
+    border: 1px solid var(--color-line);
+    background: var(--color-canvas);
+    font: inherit;
+    font-size: 13px;
+    color: var(--color-ink);
+}
+
+.broker-guest-columns,
+.broker-guest-row {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1.6fr) minmax(5rem, 0.7fr) minmax(6.5rem, 0.9fr) minmax(3.5rem, 0.4fr) minmax(7rem, 1fr) 4.5rem;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.broker-lineup-columns,
+.broker-lineup-row {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1.6fr) minmax(6rem, 0.8fr) minmax(6rem, 0.7fr) minmax(7rem, 0.9fr);
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.broker-vendor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid var(--color-line);
+}
+
+.broker-vendor-filter {
+    height: 2rem;
+    max-width: 100%;
+    padding: 0 0.55rem;
+    border: 1px solid var(--color-line);
+    background: var(--color-canvas);
+    font: inherit;
+    font-size: 13px;
+    color: var(--color-ink);
+}
+
+.broker-vendor-columns,
+.broker-vendor-row,
+.broker-artist-columns,
+.broker-artist-row {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1.4fr) minmax(5.5rem, 0.7fr) minmax(7rem, 1fr) minmax(7rem, 1fr) minmax(5rem, 0.6fr);
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.broker-guest-columns,
+.broker-lineup-columns,
+.broker-vendor-columns,
+.broker-artist-columns {
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid var(--color-line);
+    background: var(--color-zinc-50);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-silver);
+}
+
+.broker-guest-row,
+.broker-lineup-row,
+.broker-vendor-row,
+.broker-artist-row {
+    position: relative;
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--color-line);
+    background: var(--color-canvas);
+    text-align: left;
+}
+
+.broker-guest-row:hover,
+.broker-lineup-row:hover,
+.broker-vendor-row:hover,
+.broker-artist-row:hover {
+    background: var(--color-zinc-50);
+}
+
+.broker-guest-checkin {
+    position: relative;
+    z-index: 2;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-steel);
+    pointer-events: auto;
+}
+
+.broker-guest-checkin button {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--color-brand);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.broker-guest-pages {
+    padding: 0.65rem 0.75rem;
+    border-top: 1px solid var(--color-line);
+}
+
 @media (max-width: 900px) {
-    .broker-ticket-columns {
+    .broker-ticket-columns,
+    .broker-guest-columns,
+    .broker-lineup-columns,
+    .broker-vendor-columns,
+    .broker-artist-columns {
         display: none;
     }
 
-    .broker-ticket-row {
+    .broker-ticket-row,
+    .broker-guest-row,
+    .broker-lineup-row,
+    .broker-vendor-row,
+    .broker-artist-row {
         grid-template-columns: 1fr;
         gap: 0.25rem;
     }

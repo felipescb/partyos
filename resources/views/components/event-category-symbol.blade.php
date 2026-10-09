@@ -15,7 +15,7 @@
         'financeiro' => 'Financeiro',
         'checklist' => 'Checklist',
         'operacao' => 'Operação',
-        'casa' => 'Casa',
+        'casa' => 'Relacionamento',
         'equipe' => 'Equipe',
         'quando' => 'Quando',
         'ao-vivo' => 'Ao vivo',

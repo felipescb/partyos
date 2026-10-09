@@ -19,6 +19,8 @@ use App\Models\Event;
 use App\Models\EventTemplate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -377,6 +379,62 @@ class EventPlanningTest extends TestCase
         $event->refresh();
         $this->assertSame('Festa da casa 2', $event->name);
         $this->assertSame('Campinas', $event->city);
+    }
+
+    public function test_the_event_cover_is_saved_and_shown_when_editing(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create();
+        $event = app(CreateEvent::class)->handle($user, [
+            'name' => 'Festa da casa',
+            'type' => EventType::Party,
+            'status' => EventStatus::Planning,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(EventForm::class, ['event' => $event])
+            ->set('cover', UploadedFile::fake()->image('capa.jpg'))
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('events.show', $event));
+
+        $event->refresh();
+        $this->assertNotNull($event->cover_path);
+        Storage::disk('public')->assertExists($event->cover_path);
+
+        $this->actingAs($user)
+            ->get(route('events.edit', $event))
+            ->assertOk()
+            ->assertSee('broker-cover-preview', false)
+            ->assertSee('Capa de Festa da casa', false);
+
+        $this->actingAs($user)
+            ->get(route('events.show', $event))
+            ->assertOk()
+            ->assertSee('broker-event-cover', false);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('broker-event-cover', false);
+
+        Livewire::actingAs($user)
+            ->test(EventForm::class, ['event' => $event])
+            ->set('name', 'Festa da casa 2')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame($event->cover_path, $event->fresh()->cover_path);
+
+        $path = $event->cover_path;
+
+        Livewire::actingAs($user)
+            ->test(EventForm::class, ['event' => $event->fresh()])
+            ->call('removeSavedCover');
+
+        $this->assertNull($event->fresh()->cover_path);
+        Storage::disk('public')->assertMissing($path);
     }
 
     public function test_fees_and_shares_are_configured_on_the_event_page(): void

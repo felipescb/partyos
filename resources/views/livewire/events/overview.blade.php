@@ -17,6 +17,9 @@
                         @endcan
                     </div>
                 </div>
+                @if ($event->coverUrl())
+                    <img src="{{ $event->coverUrl() }}" alt="" class="broker-event-cover" />
+                @endif
                 <div class="broker-card-hero-body">
                     <h1 class="broker-card-hero-title">{{ $event->name }}</h1>
                     <p class="broker-card-hero-meta">

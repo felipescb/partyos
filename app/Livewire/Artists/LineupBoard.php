@@ -11,15 +11,20 @@ use App\Models\Artist;
 use App\Models\Booking;
 use App\Models\Event;
 use Flux\Flux;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('layouts.app')]
+#[Layout('layouts.app.dashboard')]
 class LineupBoard extends Component
 {
     use InteractsWithEvent;
+
+    public string $list = 'all';
+
+    public string $search = '';
 
     public bool $showForm = false;
 
@@ -45,10 +50,21 @@ class LineupBoard extends Component
         OfficialCatalog::ensure();
     }
 
+    public function selectList(string $list): void
+    {
+        abort_unless(in_array($list, $this->listKeys(), true), 404);
+        $this->list = $list;
+    }
+
     public function create(): void
     {
         $this->authorize('manageOperations', $this->event);
         $this->resetForm();
+
+        if ($this->list !== 'all') {
+            $this->status = $this->list;
+        }
+
         $this->showForm = true;
     }
 
@@ -142,12 +158,84 @@ class LineupBoard extends Component
 
     public function render(): View
     {
+        $bookings = $this->event->bookings()->with(['artist', 'budgetItem'])->get()
+            ->sortBy(fn (Booking $booking): string => $booking->artist->stage_name)
+            ->values();
+
         return view('livewire.artists.lineup', [
-            'bookings' => $this->event->bookings()->with(['artist', 'budgetItem'])->get(),
+            'bookings' => $this->visibleBookings($bookings),
+            'lists' => $this->lists($bookings),
+            'activeListLabel' => $this->activeListLabel(),
             'artists' => Artist::query()->where('organization_id', auth()->user()->current_organization_id)->orderBy('stage_name')->get(),
             'statuses' => BookingStatus::cases(),
             'canEdit' => auth()->user()->can('manageOperations', $this->event),
         ])->title('Artistas · '.$this->event->name);
+    }
+
+    /**
+     * @param  Collection<int, Booking>  $bookings
+     * @return Collection<int, Booking>
+     */
+    private function visibleBookings(Collection $bookings): Collection
+    {
+        return $bookings
+            ->when($this->list !== 'all', fn (Collection $rows): Collection => $rows->where('status', BookingStatus::from($this->list))->values())
+            ->when($this->search !== '', function (Collection $rows): Collection {
+                $term = mb_strtolower($this->search);
+
+                return $rows->filter(fn (Booking $booking): bool => str_contains(mb_strtolower($booking->artist->stage_name), $term))->values();
+            });
+    }
+
+    /**
+     * @param  Collection<int, Booking>  $bookings
+     * @return list<array{key: string, label: string, count: int, fee: int}>
+     */
+    private function lists(Collection $bookings): array
+    {
+        $lists = [[
+            'key' => 'all',
+            'label' => 'Todos',
+            'count' => $bookings->count(),
+            'fee' => $this->feeOf($bookings),
+        ]];
+
+        foreach (BookingStatus::cases() as $status) {
+            $subset = $bookings->where('status', $status);
+            $lists[] = [
+                'key' => $status->value,
+                'label' => $status->label(),
+                'count' => $subset->count(),
+                'fee' => $this->feeOf($subset),
+            ];
+        }
+
+        return $lists;
+    }
+
+    /**
+     * @param  Collection<int, Booking>  $bookings
+     */
+    private function feeOf(Collection $bookings): int
+    {
+        return (int) $bookings->sum(fn (Booking $booking): int => $booking->budgetItem?->committedAmount() ?? 0);
+    }
+
+    private function activeListLabel(): string
+    {
+        if ($this->list === 'all') {
+            return 'Todo o lineup';
+        }
+
+        return BookingStatus::from($this->list)->label();
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function listKeys(): array
+    {
+        return ['all', ...array_map(fn (BookingStatus $status): string => $status->value, BookingStatus::cases())];
     }
 
     private function resolveArtist(): Artist

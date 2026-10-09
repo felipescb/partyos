@@ -3,17 +3,25 @@
 namespace App\Livewire\Vendors;
 
 use App\Domain\Events\OfficialCatalog;
+use App\Models\BudgetItem;
 use App\Models\Vendor;
 use Flux\Flux;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Layout('layouts.app')]
-#[Title('Fornecedores')]
+#[Layout('layouts.app.dashboard')]
 class VendorDirectory extends Component
 {
+    public string $list = 'all';
+
+    public string $work = 'all';
+
+    public string $contact = 'all';
+
+    public string $search = '';
+
     public bool $showForm = false;
 
     public ?int $editingId = null;
@@ -40,8 +48,6 @@ class VendorDirectory extends Component
 
     public string $notes = '';
 
-    public string $search = '';
-
     public function mount(): void
     {
         OfficialCatalog::ensure();
@@ -50,6 +56,11 @@ class VendorDirectory extends Component
     public function create(): void
     {
         $this->resetForm();
+
+        if ($this->list !== 'all' && $this->list !== 'none') {
+            $this->category = $this->list;
+        }
+
         $this->showForm = true;
     }
 
@@ -126,14 +137,125 @@ class VendorDirectory extends Component
         $vendors = Vendor::query()
             ->where('organization_id', auth()->user()->current_organization_id)
             ->with(['budgetItems.event'])
-            ->when($this->search !== '', fn ($query) => $query->where('name', 'like', '%'.$this->search.'%'))
             ->orderBy('name')
             ->get();
 
+        $scoped = $this->scoped($vendors);
+
         return view('livewire.vendors.directory', [
-            'vendors' => $vendors,
+            'vendors' => $this->visible($scoped),
+            'lists' => $this->lists($scoped),
+            'activeListLabel' => $this->activeListLabel(),
             'categories' => OfficialCatalog::categories(),
-        ]);
+        ])->title('Fornecedores');
+    }
+
+    /**
+     * @param  Collection<int, Vendor>  $vendors
+     * @return Collection<int, Vendor>
+     */
+    private function scoped(Collection $vendors): Collection
+    {
+        return $vendors
+            ->when($this->work === 'booked', fn (Collection $rows): Collection => $rows->filter(fn (Vendor $vendor): bool => $vendor->budgetItems->isNotEmpty())->values())
+            ->when($this->work === 'idle', fn (Collection $rows): Collection => $rows->filter(fn (Vendor $vendor): bool => $vendor->budgetItems->isEmpty())->values())
+            ->when($this->contact === 'whatsapp', fn (Collection $rows): Collection => $rows->filter(fn (Vendor $vendor): bool => filled($vendor->whatsapp))->values())
+            ->when($this->contact === 'email', fn (Collection $rows): Collection => $rows->filter(fn (Vendor $vendor): bool => filled($vendor->email))->values())
+            ->when($this->contact === 'missing', fn (Collection $rows): Collection => $rows->filter(fn (Vendor $vendor): bool => blank($vendor->phone) && blank($vendor->whatsapp) && blank($vendor->email))->values());
+    }
+
+    /**
+     * @param  Collection<int, Vendor>  $vendors
+     * @return Collection<int, Vendor>
+     */
+    private function visible(Collection $vendors): Collection
+    {
+        return $vendors
+            ->when($this->list === 'none', fn (Collection $rows): Collection => $rows->filter(fn (Vendor $vendor): bool => blank($vendor->category))->values())
+            ->when($this->list !== 'all' && $this->list !== 'none', fn (Collection $rows): Collection => $rows->where('category', $this->list)->values())
+            ->when($this->search !== '', function (Collection $rows): Collection {
+                $term = mb_strtolower($this->search);
+
+                return $rows->filter(function (Vendor $vendor) use ($term): bool {
+                    $haystack = mb_strtolower(implode(' ', array_filter([
+                        $vendor->name,
+                        $vendor->company,
+                        $vendor->email,
+                        $vendor->phone,
+                        $vendor->whatsapp,
+                        $vendor->instagram,
+                        $vendor->category,
+                    ])));
+
+                    return str_contains($haystack, $term);
+                })->values();
+            });
+    }
+
+    /**
+     * @param  Collection<int, Vendor>  $vendors
+     * @return list<array{key: string, label: string, count: int, fee: int}>
+     */
+    private function lists(Collection $vendors): array
+    {
+        $lists = [[
+            'key' => 'all',
+            'label' => 'Todos',
+            'count' => $vendors->count(),
+            'fee' => $this->feeOf($vendors),
+        ]];
+
+        $categories = $vendors
+            ->map(fn (Vendor $vendor): string => $vendor->category ?: '')
+            ->unique()
+            ->sort()
+            ->values();
+
+        foreach ($categories as $category) {
+            if ($category === '') {
+                continue;
+            }
+
+            $subset = $vendors->where('category', $category);
+            $lists[] = [
+                'key' => $category,
+                'label' => $category,
+                'count' => $subset->count(),
+                'fee' => $this->feeOf($subset),
+            ];
+        }
+
+        $uncategorized = $vendors->filter(fn (Vendor $vendor): bool => blank($vendor->category));
+
+        if ($uncategorized->isNotEmpty()) {
+            $lists[] = [
+                'key' => 'none',
+                'label' => 'Sem categoria',
+                'count' => $uncategorized->count(),
+                'fee' => $this->feeOf($uncategorized),
+            ];
+        }
+
+        return $lists;
+    }
+
+    /**
+     * @param  Collection<int, Vendor>  $vendors
+     */
+    private function feeOf(Collection $vendors): int
+    {
+        return (int) $vendors->sum(fn (Vendor $vendor): int => $vendor->budgetItems->sum(
+            fn (BudgetItem $item): int => $item->committedAmount(),
+        ));
+    }
+
+    private function activeListLabel(): string
+    {
+        return match ($this->list) {
+            'all' => 'Toda a rede',
+            'none' => 'Sem categoria',
+            default => $this->list,
+        };
     }
 
     private function vendor(int $id): Vendor

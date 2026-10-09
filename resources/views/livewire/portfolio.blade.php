@@ -21,6 +21,9 @@
             data-event-id="{{ $event->id }}"
         >
             <a href="{{ route('events.show', $event) }}" wire:navigate class="broker-card-open" aria-label="Abrir {{ $event->name }}"></a>
+            @if ($event->coverUrl())
+                <img src="{{ $event->coverUrl() }}" alt="" class="broker-event-cover" />
+            @endif
             <div class="broker-card-head">
                 <x-event-category-symbol category="evento" :label="$event->type->label()" />
                 <div class="broker-card-actions">

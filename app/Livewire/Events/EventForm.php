@@ -10,6 +10,7 @@ use App\Models\Event;
 use App\Models\EventTemplate;
 use Flux\Flux;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -66,6 +67,15 @@ class EventForm extends Component
     public mixed $cover = null;
 
     public bool $confirmDelete = false;
+
+    public function coverPreviewUrl(): ?string
+    {
+        if (! $this->cover instanceof TemporaryUploadedFile || ! $this->cover->isPreviewable()) {
+            return null;
+        }
+
+        return $this->cover->temporaryUrl();
+    }
 
     public function mount(?Event $event = null): void
     {
@@ -201,6 +211,18 @@ class EventForm extends Component
         $this->resetValidation(['cover', 'files.0']);
     }
 
+    public function removeSavedCover(): void
+    {
+        $event = $this->editing;
+        abort_unless($event instanceof Event, 404);
+        $this->authorize('manageOperations', $event);
+
+        $this->deleteStoredCover($event->cover_path);
+        $event->update(['cover_path' => null]);
+        $this->editing = $event->fresh();
+        $this->reset('cover');
+    }
+
     public function save(CreateEvent $creator): void
     {
         $rules = [
@@ -240,10 +262,23 @@ class EventForm extends Component
 
         $timeline = $this->timelineFromForm($validated);
 
-        $coverPath = $this->editing?->cover_path;
+        $previousCover = $this->editing?->cover_path;
+        $coverPath = $previousCover;
 
-        if ($this->cover) {
-            $coverPath = $this->cover->store('covers', 'public');
+        if ($this->cover instanceof TemporaryUploadedFile) {
+            $stored = $this->cover->store('covers', 'public');
+
+            if (! is_string($stored) || $stored === '') {
+                throw ValidationException::withMessages([
+                    'cover' => 'Não consegui guardar a capa. Tente de novo.',
+                ]);
+            }
+
+            $coverPath = $stored;
+
+            if ($previousCover !== $coverPath) {
+                $this->deleteStoredCover($previousCover);
+            }
         }
 
         $attributes = [
@@ -409,6 +444,13 @@ class EventForm extends Component
         }
 
         return EventTemplate::query()->find($this->templateId)?->name;
+    }
+
+    private function deleteStoredCover(?string $path): void
+    {
+        if (is_string($path) && $path !== '') {
+            Storage::disk('public')->delete($path);
+        }
     }
 
     private function blank(mixed $value): ?string
