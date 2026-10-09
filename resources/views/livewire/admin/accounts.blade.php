@@ -3,7 +3,7 @@
         <div class="broker-tickets-head-main">
             <div>
                 <h1 class="broker-tickets-title">Contas</h1>
-                <p class="broker-tickets-sub">Quem produz abre a própria casa. Quem participa entra nos eventos em que for chamado.</p>
+                <p class="broker-tickets-sub">Uma conta cria os próprios eventos e entra nos dos outros. A outra só entra quando é chamada.</p>
             </div>
         </div>
         <div class="broker-tickets-head-actions broker-card-actions">

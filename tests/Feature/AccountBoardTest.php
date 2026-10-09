@@ -43,7 +43,7 @@ class AccountBoardTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.accounts'))
             ->assertOk()
-            ->assertSee('Quem produz abre a própria casa')
+            ->assertSee('Uma conta cria os próprios eventos e entra nos dos outros')
             ->assertSee($admin->email);
     }
 
@@ -152,5 +152,41 @@ class AccountBoardTest extends TestCase
         $this->actingAs($participant)->get(route('artists.index'))->assertForbidden();
 
         $this->assertSame(1, Organization::query()->count());
+    }
+
+    public function test_an_organizer_sees_events_they_create_and_events_they_join(): void
+    {
+        $producer = User::factory()->create();
+        app(CreateEvent::class)->handle($producer, [
+            'name' => 'Festa da casa',
+            'type' => EventType::Party,
+            'status' => EventStatus::Planning,
+        ]);
+
+        $host = User::factory()->create();
+        $invited = app(CreateEvent::class)->handle($host, [
+            'name' => 'Festa do vizinho',
+            'type' => EventType::Party,
+            'status' => EventStatus::Planning,
+        ]);
+        app(CreateEvent::class)->handle($host, [
+            'name' => 'Festa fechada',
+            'type' => EventType::Party,
+            'status' => EventStatus::Planning,
+        ]);
+        $invited->members()->attach($producer->id, ['role' => EventRole::Production->value]);
+
+        $this->actingAs($producer)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Festa da casa')
+            ->assertSee('Festa do vizinho')
+            ->assertDontSee('Festa fechada')
+            ->assertSee('Novo evento');
+
+        $this->actingAs($producer)
+            ->get(route('events.show', $invited))
+            ->assertOk()
+            ->assertSee('Festa do vizinho');
     }
 }

@@ -10,8 +10,8 @@ enum AccountKind: string
     public function label(): string
     {
         return match ($this) {
-            self::Organizer => 'Cria eventos',
-            self::Participant => 'Participa de eventos',
+            self::Organizer => 'Cria e participa de eventos',
+            self::Participant => 'Só participa de eventos',
         };
     }
 }

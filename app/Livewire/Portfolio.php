@@ -25,11 +25,13 @@ class Portfolio extends Component
         $user = auth()->user();
 
         $events = Event::query()
-            ->when(
-                $user->canCreateEvents(),
-                fn ($query) => $query->where('organization_id', $user->current_organization_id),
-                fn ($query) => $query->whereHas('members', fn ($members) => $members->whereKey($user->id)),
-            )
+            ->where(function ($query) use ($user): void {
+                $query->whereHas('members', fn ($members) => $members->whereKey($user->id));
+
+                if ($user->canCreateEvents()) {
+                    $query->orWhere('organization_id', $user->current_organization_id);
+                }
+            })
             ->with(['ticketTiers', 'revenues', 'fees', 'distributions', 'budgetItems.payments', 'budgetItems.category', 'budgetItems.vendor', 'guests'])
             ->orderByRaw('starts_at is null')
             ->orderBy('starts_at')
