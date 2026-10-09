@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\AccountBoard;
 use App\Livewire\Artists\ArtistDirectory;
 use App\Livewire\Artists\LineupBoard;
 use App\Livewire\Events\CloseBoard;
@@ -31,6 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('eventos/novo/configurar', EventForm::class)->name('events.create.configure');
     Route::get('fornecedores', VendorDirectory::class)->name('vendors.index');
     Route::get('artistas', ArtistDirectory::class)->name('artists.index');
+    Route::get('admin/contas', AccountBoard::class)->name('admin.accounts');
 
     Route::prefix('eventos/{event}')->group(function () {
         Route::get('/', EventOverview::class)->name('events.show');

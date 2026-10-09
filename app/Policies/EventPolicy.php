@@ -45,10 +45,6 @@ class EventPolicy
 
     private function role(User $user, Event $event): ?EventRole
     {
-        if ($event->organization_id !== $user->current_organization_id) {
-            return null;
-        }
-
         return $event->roleFor($user);
     }
 }

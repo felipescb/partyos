@@ -50,6 +50,7 @@ class VendorDirectory extends Component
 
     public function mount(): void
     {
+        abort_unless(auth()->user()?->canCreateEvents(), 403);
         OfficialCatalog::ensure();
     }
 

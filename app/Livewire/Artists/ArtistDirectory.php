@@ -47,6 +47,11 @@ class ArtistDirectory extends Component
 
     public string $notes = '';
 
+    public function mount(): void
+    {
+        abort_unless(auth()->user()?->canCreateEvents(), 403);
+    }
+
     public function create(): void
     {
         $this->resetForm();

@@ -29,6 +29,7 @@
                         <p class="text-steel">{{ auth()->user()->email }}</p>
                     </div>
                     <flux:menu.separator />
+                    <x-admin-menu />
                     <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>{{ __('Settings') }}</flux:menu.item>
                     <form method="POST" action="{{ route('logout') }}" class="w-full">
                         @csrf
@@ -56,18 +57,20 @@
                 <span class="tile-kicker">Casa</span>
                 <span class="tile-title">Eventos</span>
             </x-tile>
-            <x-tile :href="route('vendors.index')" size="sm" :current="request()->routeIs('vendors.*')">
-                <span class="tile-kicker">Rede</span>
-                <span class="tile-title">Fornecedores</span>
-            </x-tile>
-            <x-tile :href="route('artists.index')" size="sm" :current="request()->routeIs('artists.index')">
-                <span class="tile-kicker">Rede</span>
-                <span class="tile-title">Artistas</span>
-            </x-tile>
-            <x-tile :href="route('events.create')" size="sm" tone="accent" :current="request()->routeIs('events.create')">
-                <span class="tile-kicker">Começar</span>
-                <span class="tile-title">Novo</span>
-            </x-tile>
+            @if (auth()->user()->canCreateEvents())
+                <x-tile :href="route('vendors.index')" size="sm" :current="request()->routeIs('vendors.*')">
+                    <span class="tile-kicker">Rede</span>
+                    <span class="tile-title">Fornecedores</span>
+                </x-tile>
+                <x-tile :href="route('artists.index')" size="sm" :current="request()->routeIs('artists.index')">
+                    <span class="tile-kicker">Rede</span>
+                    <span class="tile-title">Artistas</span>
+                </x-tile>
+                <x-tile :href="route('events.create')" size="sm" tone="accent" :current="request()->routeIs('events.create')">
+                    <span class="tile-kicker">Começar</span>
+                    <span class="tile-title">Novo</span>
+                </x-tile>
+            @endif
         </nav>
 
         @persist('toast')

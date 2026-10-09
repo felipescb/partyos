@@ -18,6 +18,7 @@
             </div>
         </div>
         <flux:menu.separator />
+        <x-admin-menu />
         <flux:menu.radio.group>
             <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
                 {{ __('Settings') }}

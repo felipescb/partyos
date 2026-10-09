@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Domain\Events\OfficialCatalog;
+use App\Enums\AccountKind;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
@@ -31,6 +32,10 @@ class BootstrapPartyOs extends Command
         $existing = User::query()->where('email', $email)->first();
 
         if ($existing instanceof User) {
+            if (! $existing->is_platform_admin) {
+                $existing->forceFill(['is_platform_admin' => true])->save();
+            }
+
             $this->info('Usuário admin já existe: '.$email);
 
             return self::SUCCESS;
@@ -45,6 +50,8 @@ class BootstrapPartyOs extends Command
             'name' => $name,
             'email' => $email,
             'password' => $password,
+            'is_platform_admin' => true,
+            'account_kind' => AccountKind::Organizer,
         ]);
         $user->markEmailAsVerified();
 

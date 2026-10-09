@@ -3471,10 +3471,19 @@ a.broker-card-alert:hover {
     align-items: center;
 }
 
+.broker-account-columns,
+.broker-account-row {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1.6fr) minmax(8rem, 1fr) minmax(6rem, 0.6fr);
+    gap: 0.35rem;
+    align-items: center;
+}
+
 .broker-guest-columns,
 .broker-lineup-columns,
 .broker-vendor-columns,
-.broker-artist-columns {
+.broker-artist-columns,
+.broker-account-columns {
     padding: 0.45rem 0.75rem;
     border-bottom: 1px solid var(--color-line);
     background: var(--color-zinc-50);
@@ -3488,7 +3497,8 @@ a.broker-card-alert:hover {
 .broker-guest-row,
 .broker-lineup-row,
 .broker-vendor-row,
-.broker-artist-row {
+.broker-artist-row,
+.broker-account-row {
     position: relative;
     padding: 0.55rem 0.75rem;
     border-bottom: 1px solid var(--color-line);
@@ -3499,7 +3509,8 @@ a.broker-card-alert:hover {
 .broker-guest-row:hover,
 .broker-lineup-row:hover,
 .broker-vendor-row:hover,
-.broker-artist-row:hover {
+.broker-artist-row:hover,
+.broker-account-row:hover {
     background: var(--color-zinc-50);
 }
 
@@ -3532,7 +3543,8 @@ a.broker-card-alert:hover {
     .broker-guest-columns,
     .broker-lineup-columns,
     .broker-vendor-columns,
-    .broker-artist-columns {
+    .broker-artist-columns,
+    .broker-account-columns {
         display: none;
     }
 
@@ -3540,7 +3552,8 @@ a.broker-card-alert:hover {
     .broker-guest-row,
     .broker-lineup-row,
     .broker-vendor-row,
-    .broker-artist-row {
+    .broker-artist-row,
+    .broker-account-row {
         grid-template-columns: 1fr;
         gap: 0.25rem;
     }

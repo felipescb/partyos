@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\AccountKind;
 use App\Enums\OrgRole;
 use App\Models\CostCategory;
 use App\Models\User;
@@ -28,6 +29,8 @@ class BootstrapPartyOsTest extends TestCase
         $this->assertInstanceOf(User::class, $user);
         $this->assertNotNull($user->email_verified_at);
         $this->assertTrue(Hash::check('uma-senha-bem-longa', $user->password));
+        $this->assertTrue($user->isPlatformAdmin());
+        $this->assertSame(AccountKind::Organizer, $user->account_kind);
         $this->assertSame(OrgRole::Owner, $user->organization?->roleFor($user));
         $this->assertTrue(CostCategory::query()->where('is_system', true)->exists());
 
@@ -73,5 +76,28 @@ class BootstrapPartyOsTest extends TestCase
 
         $this->assertInstanceOf(User::class, $user);
         $this->assertTrue(Hash::check('partyos', $user->password));
+    }
+
+    public function test_it_marks_an_existing_user_as_platform_admin_without_changing_the_password(): void
+    {
+        config([
+            'partyos.admin_name' => 'Admin',
+            'partyos.admin_email' => 'admin@partyos.local',
+            'partyos.admin_password' => 'uma-senha-bem-longa',
+        ]);
+
+        $user = User::factory()->create([
+            'email' => 'admin@partyos.local',
+            'is_platform_admin' => false,
+        ]);
+        $password = $user->password;
+
+        $this->artisan('partyos:bootstrap')->assertSuccessful();
+
+        $user->refresh();
+
+        $this->assertTrue($user->is_platform_admin);
+        $this->assertSame($password, $user->password);
+        $this->assertSame(1, User::query()->count());
     }
 }

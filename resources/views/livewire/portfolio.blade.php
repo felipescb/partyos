@@ -1,10 +1,12 @@
 <div>
 <div class="broker-grid" role="list" data-broker-grid>
-    <a href="{{ route('events.create') }}" wire:navigate class="broker-grid-item broker-card broker-card-new" role="listitem" data-grid-item="new">
-        <span class="broker-card-symbol">+</span>
-        <span class="broker-card-name">Novo evento</span>
-        <span class="broker-card-foot">Abrir formulário</span>
-    </a>
+    @if (auth()->user()->canCreateEvents())
+        <a href="{{ route('events.create') }}" wire:navigate class="broker-grid-item broker-card broker-card-new" role="listitem" data-grid-item="new">
+            <span class="broker-card-symbol">+</span>
+            <span class="broker-card-name">Novo evento</span>
+            <span class="broker-card-foot">Abrir formulário</span>
+        </a>
+    @endif
 
     @forelse ($rows as $row)
         @php($event = $row['event'])
@@ -60,7 +62,13 @@
     @empty
         <div class="broker-grid-item broker-card broker-card-empty" role="listitem" data-grid-item="empty">
             <span class="broker-card-name">Nenhum evento ainda</span>
-            <span class="broker-card-foot">Use o tile «+» para criar o primeiro.</span>
+            <span class="broker-card-foot">
+                @if (auth()->user()->canCreateEvents())
+                    Use o tile «+» para criar o primeiro.
+                @else
+                    Quando alguém te chamar para um evento, ele aparece aqui.
+                @endif
+            </span>
         </div>
     @endforelse
 </div>

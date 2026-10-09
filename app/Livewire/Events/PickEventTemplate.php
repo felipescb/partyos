@@ -15,6 +15,11 @@ use Livewire\Component;
 #[Title('Escolher modelo')]
 class PickEventTemplate extends Component
 {
+    public function mount(): void
+    {
+        abort_unless(auth()->user()?->canCreateEvents(), 403);
+    }
+
     public function render(): View
     {
         OfficialCatalog::ensure();

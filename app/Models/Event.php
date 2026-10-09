@@ -90,13 +90,24 @@ class Event extends Model
     {
         $user = auth()->user();
 
-        if (! $user instanceof User || $user->current_organization_id === null) {
+        if (! $user instanceof User) {
             return null;
         }
 
-        $event = $this->where('organization_id', $user->current_organization_id)
-            ->where($field ?? $this->getRouteKeyName(), $value)
-            ->first();
+        $column = $field ?? $this->getRouteKeyName();
+        $event = null;
+
+        if ($user->current_organization_id !== null) {
+            $event = $this->where('organization_id', $user->current_organization_id)
+                ->where($column, $value)
+                ->first();
+        }
+
+        if (! $event instanceof self) {
+            $event = $this->where($column, $value)
+                ->whereHas('members', fn ($query) => $query->whereKey($user->id))
+                ->first();
+        }
 
         if (! $event instanceof self || $user->cannot('view', $event)) {
             return null;

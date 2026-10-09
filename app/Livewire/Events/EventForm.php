@@ -86,6 +86,10 @@ class EventForm extends Component
             $event = $routed instanceof Event ? $routed : null;
         }
 
+        if (! $event instanceof Event && ! auth()->user()->canCreateEvents()) {
+            abort(403);
+        }
+
         if (! $event instanceof Event) {
             $routeName = request()->route()?->getName();
 
