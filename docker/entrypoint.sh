@@ -48,7 +48,7 @@ php artisan view:cache --no-interaction
 php artisan event:clear --no-interaction
 php artisan event:cache --no-interaction
 
-echo "PartyOS: pronto em ${APP_URL:-http://127.0.0.1:8080}"
+echo "PartyOS: pronto em ${APP_URL:-http://127.0.0.1:1437}"
 
 if [ -x /usr/local/bin/docker-php-entrypoint ]; then
     exec /usr/local/bin/docker-php-entrypoint "$@"

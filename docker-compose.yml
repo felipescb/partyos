@@ -22,10 +22,10 @@ services:
     container_name: partyos
     restart: unless-stopped
     ports:
-      - "${PARTYOS_PORT:-8080}:80"
+      - "${PARTYOS_PORT:-1437}:80"
     environment:
       APP_NAME: PartyOS
-      APP_URL: ${PARTYOS_APP_URL:-http://127.0.0.1:8080}
+      APP_URL: ${PARTYOS_APP_URL:-http://127.0.0.1:1437}
       APP_DEBUG: "false"
       ADMIN_NAME: ${ADMIN_NAME:-Admin}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@partyos.local}
