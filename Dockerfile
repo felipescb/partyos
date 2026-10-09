@@ -80,7 +80,8 @@ ENV APP_ENV=production \
     TRUSTED_PROXIES=* \
     SERVER_NAME=:80 \
     ADMIN_NAME=Admin \
-    ADMIN_EMAIL=admin@partyos.local
+    ADMIN_EMAIL=admin@partyos.local \
+    ADMIN_PASSWORD=partyos
 
 COPY --from=vendor /app /app
 COPY --from=assets /app/public/build /app/public/build

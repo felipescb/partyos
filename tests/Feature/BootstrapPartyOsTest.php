@@ -6,7 +6,6 @@ use App\Enums\OrgRole;
 use App\Models\CostCategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -60,11 +59,8 @@ class BootstrapPartyOsTest extends TestCase
         $this->assertSame($password, User::query()->where('email', 'admin@partyos.local')->value('password'));
     }
 
-    public function test_it_stores_a_generated_password_when_none_is_configured(): void
+    public function test_it_uses_partyos_when_no_password_is_configured(): void
     {
-        $path = storage_path('app/private/initial-admin-password.txt');
-        File::delete($path);
-
         config([
             'partyos.admin_name' => 'Admin',
             'partyos.admin_email' => 'admin@partyos.local',
@@ -73,13 +69,9 @@ class BootstrapPartyOsTest extends TestCase
 
         $this->artisan('partyos:bootstrap')->assertSuccessful();
 
-        $password = trim((string) File::get($path));
         $user = User::query()->where('email', 'admin@partyos.local')->first();
 
         $this->assertInstanceOf(User::class, $user);
-        $this->assertNotSame('', $password);
-        $this->assertTrue(Hash::check($password, $user->password));
-
-        File::delete($path);
+        $this->assertTrue(Hash::check('partyos', $user->password));
     }
 }

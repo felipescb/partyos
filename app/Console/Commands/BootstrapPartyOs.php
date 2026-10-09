@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Domain\Events\OfficialCatalog;
 use App\Models\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class BootstrapPartyOs extends Command
@@ -38,8 +37,9 @@ class BootstrapPartyOs extends Command
         }
 
         $configuredPassword = config('partyos.admin_password');
-        $generated = ! is_string($configuredPassword) || $configuredPassword === '';
-        $password = $generated ? Str::password(24) : $configuredPassword;
+        $password = is_string($configuredPassword) && $configuredPassword !== ''
+            ? $configuredPassword
+            : 'partyos';
 
         $user = User::query()->create([
             'name' => $name,
@@ -48,19 +48,8 @@ class BootstrapPartyOs extends Command
         ]);
         $user->markEmailAsVerified();
 
-        if ($generated) {
-            $path = storage_path('app/private/initial-admin-password.txt');
-            File::ensureDirectoryExists(dirname($path));
-            File::put($path, $password.PHP_EOL);
-            File::chmod($path, 0600);
-
-            $this->warn('Senha inicial gerada. Ela fica registrada só nesta primeira subida.');
-            $this->line('E-mail: '.$email);
-            $this->line('Senha: '.$password);
-            $this->line('Cópia em storage/app/private/initial-admin-password.txt');
-        } else {
-            $this->info('Usuário admin criado: '.$email);
-        }
+        $this->info('Usuário admin criado: '.$email);
+        $this->line('Senha inicial: '.$password);
 
         return self::SUCCESS;
     }
