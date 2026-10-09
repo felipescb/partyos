@@ -8,7 +8,6 @@
         ['events.revenues', 'Receitas', 'financeiro', 'viewFinance'],
         ['events.cashflow', 'Fluxo', 'financeiro', 'viewFinance'],
         ['events.scenarios', 'Cenários', 'financeiro', 'viewFinance'],
-        ['events.distribution', 'Divisão', 'financeiro', 'viewFinance'],
         ['events.close', 'Fechamento', 'financeiro', 'viewFinance'],
         ['events.guests', 'Convidados', 'casa', 'viewGuests'],
         ['events.artists', 'Lineup', 'casa', 'view'],

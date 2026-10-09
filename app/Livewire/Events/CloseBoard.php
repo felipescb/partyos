@@ -12,10 +12,12 @@ use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('layouts.app')]
+#[Layout('layouts.app.dashboard')]
 class CloseBoard extends Component
 {
     use InteractsWithEvent;
+
+    public bool $complete = false;
 
     public function mount(Event $event): void
     {
@@ -36,7 +38,7 @@ class CloseBoard extends Component
 
         return view('livewire.events.close', [
             'statement' => $builder->statement($input),
-            'audits' => $this->event->audits()->with('user')->limit(12)->get(),
+            'audits' => $this->event->audits()->with(['user', 'auditable'])->limit(12)->get(),
             'canEdit' => auth()->user()->can('manageFinance', $this->event),
         ])->title('Fechamento · '.$this->event->name);
     }

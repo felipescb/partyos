@@ -8,31 +8,33 @@
         </div>
     </header>
 
-    <div class="broker-grid broker-grid-event" role="list" aria-label="Quadro do cronograma">
-        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
-            <x-event-category-symbol category="quando" label="Portas" />
-            <span class="broker-card-name">Portas</span>
-            <span class="broker-card-quote">{{ $flow['doors']['clock'] }}</span>
-            <span class="broker-card-foot">{{ $flow['doors']['foot'] }}</span>
-        </article>
-        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
-            <x-event-category-symbol category="atencao" label="Fecha" />
-            <span class="broker-card-name">Fecha</span>
-            <span class="broker-card-quote">{{ $flow['close']['clock'] }}</span>
-            <span class="broker-card-foot">{{ $flow['close']['foot'] }}</span>
-        </article>
-        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
-            <x-event-category-symbol category="ao-vivo" label="No ar" />
-            <span class="broker-card-name">No ar</span>
-            <span class="broker-card-quote">{{ $flow['span']['value'] }}</span>
-            <span class="broker-card-foot">{{ $flow['span']['foot'] }}</span>
-        </article>
-        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
-            <x-event-category-symbol category="leitura" label="Blocos" />
-            <span class="broker-card-name">Blocos</span>
-            <span class="broker-card-quote">{{ $flow['blocks']['value'] }}</span>
-            <span class="broker-card-foot">{{ $flow['blocks']['foot'] }}</span>
-        </article>
+    <div class="broker-grid broker-grid-event broker-grid-schedule" role="list" aria-label="Quadro do cronograma">
+        <div class="broker-schedule-stats" role="presentation">
+            <article class="broker-card broker-card-module" role="listitem">
+                <x-event-category-symbol category="quando" label="Portas" />
+                <span class="broker-card-name">Portas</span>
+                <span class="broker-card-quote">{{ $flow['doors']['clock'] }}</span>
+                <span class="broker-card-foot">{{ $flow['doors']['foot'] }}</span>
+            </article>
+            <article class="broker-card broker-card-module" role="listitem">
+                <x-event-category-symbol category="atencao" label="Fecha" />
+                <span class="broker-card-name">Fecha</span>
+                <span class="broker-card-quote">{{ $flow['close']['clock'] }}</span>
+                <span class="broker-card-foot">{{ $flow['close']['foot'] }}</span>
+            </article>
+            <article class="broker-card broker-card-module" role="listitem">
+                <x-event-category-symbol category="ao-vivo" label="No ar" />
+                <span class="broker-card-name">No ar</span>
+                <span class="broker-card-quote">{{ $flow['span']['value'] }}</span>
+                <span class="broker-card-foot">{{ $flow['span']['foot'] }}</span>
+            </article>
+            <article class="broker-card broker-card-module" role="listitem">
+                <x-event-category-symbol category="leitura" label="Blocos" />
+                <span class="broker-card-name">Blocos</span>
+                <span class="broker-card-quote">{{ $flow['blocks']['value'] }}</span>
+                <span class="broker-card-foot">{{ $flow['blocks']['foot'] }}</span>
+            </article>
+        </div>
 
         <x-event-schedule-flow :flow="$flow" :can-edit="$canEdit" class="broker-grid-item" />
     </div>

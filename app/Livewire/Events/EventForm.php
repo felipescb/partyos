@@ -67,11 +67,14 @@ class EventForm extends Component
 
     public bool $confirmDelete = false;
 
-    public function mount(): void
+    public function mount(?Event $event = null): void
     {
         OfficialCatalog::ensure();
 
-        $event = request()->route('event');
+        if (! $event instanceof Event) {
+            $routed = request()->route('event');
+            $event = $routed instanceof Event ? $routed : null;
+        }
 
         if (! $event instanceof Event) {
             $routeName = request()->route()?->getName();
@@ -292,7 +295,7 @@ class EventForm extends Component
             'statuses' => EventStatus::cases(),
             'templateLabel' => $this->selectedTemplateLabel(),
             'durationOptions' => self::durationOptions(),
-        ])->title($this->editing ? 'Editar evento' : 'Novo evento');
+        ])->title($this->editing ? 'Configuração' : 'Novo evento');
     }
 
     /**
@@ -324,7 +327,7 @@ class EventForm extends Component
             $executionDay = Carbon::parse($execution)->startOfDay();
 
             if ($planningDay->greaterThan($executionDay)) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'planningStartsAt' => 'O início do planejamento deve ser antes da data da festa.',
                 ]);
             }

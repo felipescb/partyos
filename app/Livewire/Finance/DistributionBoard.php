@@ -10,10 +10,8 @@ use App\Models\Event;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
-use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('layouts.app')]
 class DistributionBoard extends Component
 {
     use InteractsWithEvent;
@@ -98,7 +96,7 @@ class DistributionBoard extends Component
             'shares' => $this->event->distributions()->get(),
             'bases' => $this->bases(),
             'canEdit' => auth()->user()->can('manageFinance', $this->event),
-        ])->title('Divisão · '.$this->event->name);
+        ]);
     }
 
     /**

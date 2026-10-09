@@ -105,19 +105,8 @@
             :preview="$cashflowPreview"
             class="broker-grid-item"
         />
-        <a href="{{ route('events.distribution', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
-            <x-event-category-symbol category="financeiro" />
-            <span class="broker-card-name">Divisão</span>
-            <span class="broker-card-foot">Taxas e quem fica com o quê</span>
-        </a>
     @endcan
 
-    <a href="{{ route('events.schedule', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
-        <x-event-category-symbol category="operacao" />
-        <span class="broker-card-name">Horários</span>
-        <span class="broker-card-quote">{{ $next?->starts_at?->format('H:i') ?? '—' }}</span>
-        <span class="broker-card-foot">{{ $next?->title ?? 'Cronograma vazio' }}</span>
-    </a>
     @can('viewGuests', $event)
         <a href="{{ route('events.guests', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
             <x-event-category-symbol category="casa" />
@@ -132,6 +121,12 @@
         <span class="broker-card-quote">{{ $lineupCount }}</span>
         <span class="broker-card-foot">Artistas neste evento</span>
     </a>
+    <x-event-operation-grid
+        :event="$event"
+        :flow="$scheduleFlow"
+        :total="$scheduleCount"
+        class="broker-grid-item"
+    />
     @if ($event->status === \App\Enums\EventStatus::Live)
         <article class="broker-grid-item broker-card broker-card-span-2 broker-card-live broker-event-stack-span" role="listitem">
             <x-event-category-symbol category="ao-vivo" />

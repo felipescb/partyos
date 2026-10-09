@@ -1,70 +1,95 @@
-<div class="flex flex-col gap-5">
-    <div>
-        <flux:heading size="xl">Taxas e divisão</flux:heading>
-        <flux:text>Cada evento tem o seu acordo. Percentuais saem da base escolhida, sem um incidir sobre o outro.</flux:text>
-    </div>
-    <section class="grid gap-8 lg:grid-cols-2">
-        <div>
-            <flux:heading size="lg">Taxas</flux:heading>
-            @forelse ($fees as $fee)
-                <div class="mt-3 flex items-center justify-between text-sm">
-                    <span>{{ $fee->name }} · {{ $bases[$fee->applies_to === 'category' ? $fee->revenue_category : $fee->applies_to] ?? $fee->applies_to }} · {{ $fee->kind->value === 'percent' ? \App\Domain\Finance\Money::formatPercent($fee->basis_points ?? 0) : '' }}@if($fee->kind->value === 'fixed')<x-money :cents="$fee->amount ?? 0" :currency="$event->currency" />@endif</span>
-                    @if ($canEdit)
-                        <button type="button" wire:click="deleteFee({{ $fee->id }})" class="font-medium text-brand underline">Remover</button>
-                    @endif
-                </div>
-            @empty
-                <p class="mt-2 text-base text-steel">Nenhuma taxa. Bilheteria de plataforma, por exemplo, entra aqui.</p>
-            @endforelse
-            @if ($canEdit)
-                <form wire:submit="addFee" class="mt-4 space-y-3">
-                    <flux:input wire:model="feeName" label="Nome" placeholder="Taxa da bilheteria" />
-                    <flux:select wire:model="feeApplies" label="Incide sobre">
-                        @foreach ($bases as $value => $label)
-                            <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
-                        @endforeach
+@php
+    $baseOf = function (object $item) use ($bases): string {
+        $key = $item->applies_to === 'category' ? $item->revenue_category : $item->applies_to;
+
+        return $bases[$key] ?? (string) $item->applies_to;
+    };
+@endphp
+
+<div class="broker-grid broker-grid-event broker-grid-config broker-grid-config-pair" role="list" aria-label="Taxas e divisão">
+    <article class="broker-grid-item broker-card broker-config-card" role="listitem">
+        <x-event-category-symbol category="financeiro" />
+        <h2 class="broker-card-name">Taxas</h2>
+        <p class="broker-config-note">Percentuais saem da base escolhida, sem uma taxa incidir sobre a outra.</p>
+        @if ($fees->isEmpty())
+            <p class="broker-config-note">Nenhuma taxa. Bilheteria de plataforma, por exemplo, entra aqui.</p>
+        @else
+            <ul class="broker-config-adjustments">
+                @foreach ($fees as $fee)
+                    <li class="broker-config-adjustment">
+                        <span class="broker-config-adjustment-main">
+                            <span class="broker-config-adjustment-name">{{ $fee->name }}</span>
+                            <span class="broker-config-adjustment-meta">{{ $baseOf($fee) }} · @if ($fee->kind->value === 'percent'){{ \App\Domain\Finance\Money::formatPercent($fee->basis_points ?? 0) }}@else<x-money :cents="$fee->amount ?? 0" :currency="$event->currency" />@endif</span>
+                        </span>
+                        @if ($canEdit)
+                            <button type="button" class="broker-config-adjustment-remove" wire:click="deleteFee({{ $fee->id }})" wire:confirm="Remover esta taxa?" aria-label="Remover {{ $fee->name }}" title="Remover">
+                                <flux:icon.trash variant="mini" class="size-3.5" />
+                            </button>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+        @if ($canEdit)
+            <form wire:submit="addFee" class="broker-config-fields">
+                <flux:input wire:model="feeName" label="Nome" placeholder="Taxa da bilheteria" />
+                <flux:select wire:model="feeApplies" label="Incide sobre">
+                    @foreach ($bases as $value => $label)
+                        <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+                <div class="broker-config-fields-duo">
+                    <flux:select wire:model="feeKind" label="Tipo">
+                        <flux:select.option value="percent">Percentual</flux:select.option>
+                        <flux:select.option value="fixed">Valor fixo</flux:select.option>
                     </flux:select>
-                    <div class="grid grid-cols-2 gap-3">
-                        <flux:select wire:model="feeKind" label="Tipo">
-                            <flux:select.option value="percent">Percentual</flux:select.option>
-                            <flux:select.option value="fixed">Valor fixo</flux:select.option>
-                        </flux:select>
-                        <flux:input wire:model="feeValue" label="Valor" placeholder="10 ou 500,00" />
-                    </div>
-                    <flux:button type="submit">Adicionar taxa</flux:button>
-                </form>
-            @endif
-        </div>
-        <div>
-            <flux:heading size="lg">Quem fica com o quê</flux:heading>
-            @forelse ($shares as $share)
-                <div class="mt-3 flex items-center justify-between text-sm">
-                    <span>{{ $share->beneficiary_name }} · {{ $bases[$share->applies_to === 'category' ? $share->revenue_category : $share->applies_to] ?? $share->applies_to }} · {{ $share->kind->value === 'percent' ? \App\Domain\Finance\Money::formatPercent($share->basis_points ?? 0) : '' }}@if($share->kind->value === 'fixed')<x-money :cents="$share->amount ?? 0" :currency="$event->currency" />@endif</span>
-                    @if ($canEdit)
-                        <button type="button" wire:click="deleteShare({{ $share->id }})" class="font-medium text-brand underline">Remover</button>
-                    @endif
+                    <flux:input wire:model="feeValue" label="Valor" placeholder="10 ou 500,00" />
                 </div>
-            @empty
-                <p class="mt-2 text-base text-steel">Nenhuma divisão. Exemplo: 25% da bilheteria para a casa, 75% para a produção.</p>
-            @endforelse
-            @if ($canEdit)
-                <form wire:submit="addShare" class="mt-4 space-y-3">
-                    <flux:input wire:model="beneficiary" label="Quem recebe" placeholder="Casa, coletivo, sócio" />
-                    <flux:select wire:model="shareApplies" label="Sobre qual receita">
-                        @foreach ($bases as $value => $label)
-                            <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
-                        @endforeach
+                <flux:button type="submit" size="sm" variant="primary">Adicionar taxa</flux:button>
+            </form>
+        @endif
+    </article>
+
+    <article class="broker-grid-item broker-card broker-config-card" role="listitem">
+        <x-event-category-symbol category="financeiro" />
+        <h2 class="broker-card-name">Quem fica com o quê</h2>
+        <p class="broker-config-note">A parte de cada um sai da receita escolhida, no acordo desta festa.</p>
+        @if ($shares->isEmpty())
+            <p class="broker-config-note">Nenhuma divisão. Exemplo: 25% da bilheteria para a casa, 75% para a produção.</p>
+        @else
+            <ul class="broker-config-adjustments">
+                @foreach ($shares as $share)
+                    <li class="broker-config-adjustment">
+                        <span class="broker-config-adjustment-main">
+                            <span class="broker-config-adjustment-name">{{ $share->beneficiary_name }}</span>
+                            <span class="broker-config-adjustment-meta">{{ $baseOf($share) }} · @if ($share->kind->value === 'percent'){{ \App\Domain\Finance\Money::formatPercent($share->basis_points ?? 0) }}@else<x-money :cents="$share->amount ?? 0" :currency="$event->currency" />@endif</span>
+                        </span>
+                        @if ($canEdit)
+                            <button type="button" class="broker-config-adjustment-remove" wire:click="deleteShare({{ $share->id }})" wire:confirm="Remover esta divisão?" aria-label="Remover {{ $share->beneficiary_name }}" title="Remover">
+                                <flux:icon.trash variant="mini" class="size-3.5" />
+                            </button>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+        @if ($canEdit)
+            <form wire:submit="addShare" class="broker-config-fields">
+                <flux:input wire:model="beneficiary" label="Quem recebe" placeholder="Casa, coletivo, sócio" />
+                <flux:select wire:model="shareApplies" label="Sobre qual receita">
+                    @foreach ($bases as $value => $label)
+                        <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+                <div class="broker-config-fields-duo">
+                    <flux:select wire:model="shareKind" label="Tipo">
+                        <flux:select.option value="percent">Percentual</flux:select.option>
+                        <flux:select.option value="fixed">Valor fixo</flux:select.option>
                     </flux:select>
-                    <div class="grid grid-cols-2 gap-3">
-                        <flux:select wire:model="shareKind" label="Tipo">
-                            <flux:select.option value="percent">Percentual</flux:select.option>
-                            <flux:select.option value="fixed">Valor fixo</flux:select.option>
-                        </flux:select>
-                        <flux:input wire:model="shareValue" label="Valor" placeholder="25" />
-                    </div>
-                    <flux:button type="submit">Adicionar divisão</flux:button>
-                </form>
-            @endif
-        </div>
-    </section>
+                    <flux:input wire:model="shareValue" label="Valor" placeholder="25" />
+                </div>
+                <flux:button type="submit" size="sm" variant="primary">Adicionar divisão</flux:button>
+            </form>
+        @endif
+    </article>
 </div>

@@ -3,6 +3,7 @@
 namespace App\Livewire\Events;
 
 use App\Domain\Events\PlanningTimelineBuilder;
+use App\Domain\Events\ScheduleFlow;
 use App\Domain\Finance\CashflowPreview;
 use App\Domain\Finance\EventAlerts;
 use App\Domain\Finance\EventFinanceReader;
@@ -12,6 +13,7 @@ use App\Enums\EventStatus;
 use App\Enums\TaskStatus;
 use App\Livewire\Concerns\InteractsWithEvent;
 use App\Livewire\Concerns\ManagesEventTeam;
+use App\Models\Event;
 use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -26,7 +28,7 @@ class EventOverview extends Component
 
     public bool $cashflowGridExpanded = false;
 
-    public function mount(\App\Models\Event $event): void
+    public function mount(Event $event): void
     {
         $this->mountEvent($event);
     }
@@ -55,6 +57,7 @@ class EventOverview extends Component
         EventAlerts $alerts,
         PlanningTimelineBuilder $planningTimeline,
         CashflowPreview $cashflowPreview,
+        ScheduleFlow $scheduleFlow,
     ): View {
         $input = $reader->read($this->event);
         $statement = $builder->statement($input);
@@ -114,6 +117,8 @@ class EventOverview extends Component
             'ticketsSold' => $ticketsSold,
             'ticketsAvailable' => $ticketsAvailable,
             'cashflowPreview' => $canFinance ? $cashflowPreview->forEvent($this->event) : null,
+            'scheduleFlow' => $scheduleFlow->present($this->event, $scheduleItems = $this->event->scheduleItems()->with('vendor')->get()),
+            'scheduleCount' => $scheduleItems->count(),
         ])->title($this->event->name);
     }
 }

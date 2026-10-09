@@ -21,6 +21,41 @@ class ScheduleFlow
      *     undated: list<array{id: int, title: string, place: string|null}>
      * }
      */
+    public function present(Event $event, Collection $items, int $limit = 6): array
+    {
+        $dated = $items
+            ->filter(fn (ScheduleItem $item): bool => $item->starts_at !== null)
+            ->sortBy(fn (ScheduleItem $item): string => $item->starts_at->format('Y-m-d H:i:s').sprintf('%06d', $item->sort_order))
+            ->values();
+
+        $now = now();
+        $anchor = $dated->search(fn (ScheduleItem $item): bool => $now->lt($this->endsAt($item)));
+
+        if ($anchor === false) {
+            $anchor = max(0, $dated->count() - 1);
+        }
+
+        $start = max(0, $anchor - 1);
+
+        if ($start + $limit > $dated->count()) {
+            $start = max(0, $dated->count() - $limit);
+        }
+
+        return $this->forEvent($event, $dated->slice($start, $limit)->values());
+    }
+
+    /**
+     * @param  Collection<int, ScheduleItem>  $items
+     * @return array{
+     *     doors: array{clock: string, foot: string},
+     *     close: array{clock: string, foot: string},
+     *     span: array{value: string, foot: string},
+     *     blocks: array{value: string, foot: string},
+     *     range: string|null,
+     *     days: list<array{key: string, label: string, kicker: string, beats: list<array{id: int, title: string, clock: string, code: string|null, duration: string|null, place: string|null, phase: string, current: bool}>}>,
+     *     undated: list<array{id: int, title: string, place: string|null}>
+     * }
+     */
     public function forEvent(Event $event, Collection $items): array
     {
         $dated = $items

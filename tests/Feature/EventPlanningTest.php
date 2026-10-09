@@ -12,8 +12,9 @@ use App\Enums\EventType;
 use App\Enums\PaymentStatus;
 use App\Livewire\Events\EventForm;
 use App\Livewire\Events\EventOverview;
-use App\Livewire\Tasks\TaskBoard;
 use App\Livewire\Finance\BudgetBoard;
+use App\Livewire\Finance\DistributionBoard;
+use App\Livewire\Tasks\TaskBoard;
 use App\Models\Event;
 use App\Models\EventTemplate;
 use App\Models\User;
@@ -292,5 +293,141 @@ class EventPlanningTest extends TestCase
         $task->refresh();
         $this->assertSame('Reservar galpão', $task->title);
         $this->assertSame('done', $task->status->value);
+    }
+
+    public function test_event_overview_operation_module_shows_a_mini_timeflow(): void
+    {
+        $user = User::factory()->create();
+        $event = app(CreateEvent::class)->handle($user, [
+            'name' => 'Festa operacao',
+            'type' => EventType::Party,
+            'starts_at' => '2026-11-28 00:00:00',
+        ]);
+
+        foreach ([
+            ['Chegada da estrutura', '2026-11-27 16:00:00', 120, 0],
+            ['Montagem', '2026-11-27 18:00:00', 240, 1],
+            ['Soundcheck', '2026-11-27 22:30:00', 60, 2],
+            ['Abertura da casa', '2026-11-28 00:00:00', 120, 3],
+            ['Primeiro artista', '2026-11-28 02:00:00', 75, 4],
+            ['Pico da pista', '2026-11-28 04:00:00', 180, 5],
+            ['Desmontagem', '2026-11-28 08:30:00', 90, 6],
+        ] as [$title, $startsAt, $duration, $order]) {
+            $event->scheduleItems()->create([
+                'title' => $title,
+                'starts_at' => $startsAt,
+                'duration_minutes' => $duration,
+                'sort_order' => $order,
+            ]);
+        }
+
+        Livewire::actingAs($user)
+            ->test(EventOverview::class, ['event' => $event])
+            ->assertSee('Horários')
+            ->assertSee('Ver todas · 7')
+            ->assertSee('T-8h')
+            ->assertSee('T0')
+            ->assertSee('Chegada da estrutura')
+            ->assertSee('Abertura da casa')
+            ->assertSee('Primeiro artista')
+            ->assertSee('Pico da pista')
+            ->assertDontSee('Desmontagem');
+    }
+
+    public function test_edit_screen_opens_event_configuration_instead_of_the_new_event_flow(): void
+    {
+        $user = User::factory()->create();
+        $event = app(CreateEvent::class)->handle($user, [
+            'name' => 'Festa da casa',
+            'type' => EventType::Party,
+            'status' => EventStatus::Planning,
+            'venue_name' => 'Galpão',
+            'city' => 'São Paulo',
+            'capacity' => 400,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('events.edit', $event))
+            ->assertOk()
+            ->assertSee('Configuração')
+            ->assertSee('Festa da casa')
+            ->assertSee('broker-grid-config')
+            ->assertSee('Essencial')
+            ->assertSee('Quando')
+            ->assertSee('Onde')
+            ->assertSee('Duração da festa')
+            ->assertSee('← Quadro')
+            ->assertSee('aria-label="Salvar"', false)
+            ->assertSee('aria-label="Excluir"', false)
+            ->assertSee('Excluir este evento?')
+            ->assertDontSee('Montar evento')
+            ->assertDontSee('Escolha um modelo');
+
+        Livewire::actingAs($user)
+            ->test(EventForm::class, ['event' => $event])
+            ->assertSet('name', 'Festa da casa')
+            ->assertSet('city', 'São Paulo')
+            ->assertSet('status', EventStatus::Planning->value)
+            ->set('name', 'Festa da casa 2')
+            ->set('city', 'Campinas')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('events.show', $event));
+
+        $event->refresh();
+        $this->assertSame('Festa da casa 2', $event->name);
+        $this->assertSame('Campinas', $event->city);
+    }
+
+    public function test_fees_and_shares_are_configured_on_the_event_page(): void
+    {
+        $user = User::factory()->create();
+        $event = app(CreateEvent::class)->handle($user, [
+            'name' => 'Festa da casa',
+            'type' => EventType::Party,
+            'status' => EventStatus::Planning,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('events.edit', $event))
+            ->assertOk()
+            ->assertSee('Taxas')
+            ->assertSee('Quem fica com o quê')
+            ->assertSee('Adicionar taxa')
+            ->assertSee('Adicionar divisão');
+
+        $this->actingAs($user)
+            ->get(route('events.show', $event))
+            ->assertOk()
+            ->assertDontSee('Taxas e quem fica com o quê')
+            ->assertDontSee(route('events.distribution', $event), false);
+
+        $this->actingAs($user)
+            ->get(route('events.distribution', $event))
+            ->assertRedirect(route('events.edit', $event));
+
+        Livewire::actingAs($user)
+            ->test(DistributionBoard::class, ['event' => $event])
+            ->set('feeName', 'Bilheteria')
+            ->set('feeApplies', 'tickets')
+            ->set('feeKind', 'percent')
+            ->set('feeValue', '10')
+            ->call('addFee')
+            ->assertHasNoErrors()
+            ->set('beneficiary', 'Casa')
+            ->set('shareApplies', 'tickets')
+            ->set('shareKind', 'percent')
+            ->set('shareValue', '25')
+            ->call('addShare')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('event_fees', [
+            'event_id' => $event->id,
+            'name' => 'Bilheteria',
+        ]);
+        $this->assertDatabaseHas('revenue_distributions', [
+            'event_id' => $event->id,
+            'beneficiary_name' => 'Casa',
+        ]);
     }
 }

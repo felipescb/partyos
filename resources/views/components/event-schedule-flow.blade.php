@@ -29,14 +29,23 @@
     @else
         <div class="broker-schedule-scroll">
             @if ($flow['days'] !== [])
+                @php
+                    $sideIndex = 0;
+                @endphp
                 <ol class="broker-schedule-rail">
                     @foreach ($flow['days'] as $day)
                         <li class="broker-schedule-day">
-                            <span class="broker-schedule-day-kicker">{{ $day['kicker'] }}</span>
-                            <span>{{ $day['label'] }}</span>
+                            <span class="broker-schedule-day-label">
+                                <span class="broker-schedule-day-kicker">{{ $day['kicker'] }}</span>
+                                <span>{{ $day['label'] }}</span>
+                            </span>
                         </li>
                         @foreach ($day['beats'] as $beat)
-                            <li>
+                            @php
+                                $side = $sideIndex % 2 === 0 ? 'left' : 'right';
+                                $sideIndex++;
+                            @endphp
+                            <li @class(['broker-schedule-stop', 'broker-schedule-stop-'.$side])>
                                 @php($tag = $canEdit ? 'button' : 'div')
                                 <{{ $tag }}
                                     @class([
@@ -47,27 +56,29 @@
                                     @if ($canEdit) type="button" wire:click="edit({{ $beat['id'] }})" @endif
                                     @if ($canEdit) aria-label="Editar {{ $beat['title'] }}" @endif
                                 >
-                                    <span class="broker-schedule-when">
-                                        <span class="broker-schedule-clock">{{ $beat['clock'] }}</span>
-                                        @if ($beat['code'])
-                                            <span class="broker-schedule-code">{{ $beat['code'] }}</span>
-                                        @endif
-                                    </span>
-                                    <span class="broker-schedule-node" aria-hidden="true"></span>
-                                    <span class="broker-schedule-body">
-                                        <span class="broker-schedule-title">{{ $beat['title'] }}</span>
-                                        <span class="broker-schedule-meta">
-                                            @if ($beat['duration'])
-                                                <span>{{ $beat['duration'] }}</span>
-                                            @endif
-                                            @if ($beat['place'])
-                                                <span>{{ $beat['place'] }}</span>
-                                            @endif
-                                            @if ($beat['current'])
-                                                <span class="broker-schedule-now">agora</span>
+                                    <span class="broker-schedule-copy">
+                                        <span class="broker-schedule-body">
+                                            <span class="broker-schedule-title">{{ $beat['title'] }}</span>
+                                            <span class="broker-schedule-meta">
+                                                @if ($beat['duration'])
+                                                    <span>{{ $beat['duration'] }}</span>
+                                                @endif
+                                                @if ($beat['place'])
+                                                    <span>{{ $beat['place'] }}</span>
+                                                @endif
+                                                @if ($beat['current'])
+                                                    <span class="broker-schedule-now">agora</span>
+                                                @endif
+                                            </span>
+                                        </span>
+                                        <span class="broker-schedule-when">
+                                            <span class="broker-schedule-clock">{{ $beat['clock'] }}</span>
+                                            @if ($beat['code'])
+                                                <span class="broker-schedule-code">{{ $beat['code'] }}</span>
                                             @endif
                                         </span>
                                     </span>
+                                    <span class="broker-schedule-node" aria-hidden="true"></span>
                                 </{{ $tag }}>
                             </li>
                         @endforeach

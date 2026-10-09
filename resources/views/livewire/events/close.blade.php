@@ -1,66 +1,64 @@
-<div class="flex flex-col gap-5">
-    <div class="flex flex-wrap items-end justify-between gap-3">
-        <div>
-            <flux:heading size="xl">Fechamento</flux:heading>
-            <flux:text>O que você planejou contra o que aconteceu. Receita líquida já desconta taxa e divisão.</flux:text>
+<div class="broker-close-page">
+    <header class="broker-tickets-head">
+        <div class="broker-tickets-head-main">
+            <a href="{{ route('events.show', $event) }}" wire:navigate class="broker-task-notebook-back">← Quadro</a>
+            <div>
+                <x-event-category-symbol category="financeiro" />
+                <h1 class="broker-cashflow-title">Fechamento</h1>
+                <p class="broker-cashflow-sub">{{ $event->name }} · o que você planejou contra o que aconteceu</p>
+            </div>
         </div>
-        @if ($canEdit && $event->status !== \App\Enums\EventStatus::Finished)
-            <flux:button variant="primary" wire:click="finish">Marcar como finalizado</flux:button>
-        @endif
-    </div>
-    <div class="overflow-x-auto rounded-2xl border border-line bg-canvas shadow-whisper">
-        <table class="w-full text-left text-base">
-            <thead class="text-xs font-medium tracking-normal text-steel uppercase">
-                <tr>
-                    <th class="px-4 py-3"></th>
-                    <th class="px-4 py-3">Previsto</th>
-                    <th class="px-4 py-3">Real</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ([
-                    ['Receita bruta', $statement->expectedGross, $statement->actualGross],
-                    ['Taxas', $statement->expectedFees, $statement->actualFees],
-                    ['Divisão', $statement->expectedDistributions, $statement->actualDistributions],
-                    ['Receita líquida', $statement->expectedNet, $statement->actualNet],
-                    ['Custos', $statement->committedCosts, $statement->paidCosts],
-                    ['Resultado', $statement->projectedProfit, $statement->currentResult],
-                ] as [$label, $planned, $actual])
-                    <tr class="border-t border-line">
-                        <th class="px-4 py-3 font-medium">{{ $label }}</th>
-                        <td class="px-4 py-3"><x-money :cents="$planned" :currency="$event->currency" /></td>
-                        <td class="px-4 py-3"><x-money :cents="$actual" :currency="$event->currency" /></td>
-                    </tr>
-                @endforeach
-                <tr class="border-t border-line">
-                    <th class="px-4 py-3 font-medium">Público</th>
-                    <td class="px-4 py-3 tabular-nums">{{ $statement->ticketsGoal }} ingressos na meta</td>
-                    <td class="px-4 py-3 tabular-nums">{{ $statement->ticketsSold }} vendidos · {{ $statement->confirmedGuestHeads }} convidados</td>
-                </tr>
-                <tr class="border-t border-line">
-                    <th class="px-4 py-3 font-medium">Ticket médio da meta</th>
-                    <td class="px-4 py-3" colspan="2">
-                        @if ($statement->averageTicket)
-                            <x-money :cents="$statement->averageTicket" :currency="$event->currency" />
-                        @else
-                            Defina a meta dos lotes.
-                        @endif
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div>
-        <flux:heading size="lg">Alterações recentes</flux:heading>
-        @forelse ($audits as $audit)
-            <p class="mt-2 text-base text-steel">
-                {{ $audit->created_at?->format('d/m H:i') }}
-                · {{ class_basename($audit->auditable_type) }}
-                {{ $audit->action }}
-                @if ($audit->user) · {{ $audit->user->name }} @endif
-            </p>
-        @empty
-            <p class="mt-2 text-base text-steel">Ainda não houve mudança financeira registrada.</p>
-        @endforelse
+        <div class="broker-tickets-head-actions">
+            <span @class([
+                'broker-card-status',
+                'broker-card-status-up' => $event->status === \App\Enums\EventStatus::Finished,
+            ])>{{ $event->status->label() }}</span>
+            @if ($canEdit && $event->status !== \App\Enums\EventStatus::Finished)
+                <button
+                    type="button"
+                    class="broker-card-icon-btn"
+                    wire:click="finish"
+                    aria-label="Marcar como finalizado"
+                    title="Marcar como finalizado"
+                >
+                    <flux:icon.check variant="mini" class="size-4" />
+                </button>
+            @endif
+        </div>
+    </header>
+
+    <div class="broker-grid broker-grid-event broker-grid-close" role="list" aria-label="Quadro do fechamento">
+        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="leitura" label="Previsto" />
+            <span class="broker-card-name">Previsto</span>
+            <span class="broker-card-quote"><x-money :cents="$statement->projectedProfit" :currency="$event->currency" /></span>
+            <span class="broker-card-foot">Resultado no plano</span>
+        </article>
+        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol :category="$statement->currentResult < 0 ? 'atencao' : 'ao-vivo'" label="Real" />
+            <span class="broker-card-name">Real</span>
+            <span class="broker-card-quote"><x-money :cents="$statement->currentResult" :currency="$event->currency" /></span>
+            <span class="broker-card-foot">Líquido menos o comprometido</span>
+        </article>
+        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="casa" label="Público" />
+            <span class="broker-card-name">Público</span>
+            <span class="broker-card-quote">{{ $statement->ticketsSold }}</span>
+            <span class="broker-card-foot">de {{ $statement->ticketsGoal }} na meta · {{ $statement->confirmedGuestHeads }} convidados</span>
+        </article>
+        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="financeiro" label="Ticket" />
+            <span class="broker-card-name">Ticket médio</span>
+            @if ($statement->averageTicket)
+                <span class="broker-card-quote"><x-money :cents="$statement->averageTicket" :currency="$event->currency" /></span>
+                <span class="broker-card-foot">Média da meta</span>
+            @else
+                <span class="broker-card-quote broker-card-quote-muted">—</span>
+                <span class="broker-card-foot">Defina a meta dos lotes</span>
+            @endif
+        </article>
+
+        <x-event-close-sheet :event="$event" :statement="$statement" :complete="$complete" class="broker-grid-item" />
+        <x-event-close-log :audits="$audits" class="broker-grid-item" />
     </div>
 </div>
