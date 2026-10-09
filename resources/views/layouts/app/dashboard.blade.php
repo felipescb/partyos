@@ -54,6 +54,30 @@
             {{ $slot }}
         </main>
 
+        @if ($headerEvent && ! request()->routeIs('events.show'))
+            <div class="tile-strip-bar">
+                <x-event-nav :event="$headerEvent" />
+            </div>
+            <nav class="tile-dock" aria-label="Produtora">
+                <x-tile :href="route('dashboard')" size="sm" :current="request()->routeIs('dashboard')">
+                    <span class="tile-kicker">Casa</span>
+                    <span class="tile-title">Eventos</span>
+                </x-tile>
+                <x-tile :href="route('vendors.index')" size="sm" :current="request()->routeIs('vendors.*')">
+                    <span class="tile-kicker">Rede</span>
+                    <span class="tile-title">Fornecedores</span>
+                </x-tile>
+                <x-tile :href="route('artists.index')" size="sm" :current="request()->routeIs('artists.index')">
+                    <span class="tile-kicker">Rede</span>
+                    <span class="tile-title">Artistas</span>
+                </x-tile>
+                <x-tile :href="route('events.create')" size="sm" tone="accent" :current="request()->routeIs('events.create')">
+                    <span class="tile-kicker">Começar</span>
+                    <span class="tile-title">Novo</span>
+                </x-tile>
+            </nav>
+        @endif
+
         @persist('toast')
             <flux:toast.group>
                 <flux:toast />

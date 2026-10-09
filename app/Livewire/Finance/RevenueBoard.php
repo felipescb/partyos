@@ -14,7 +14,7 @@ use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('layouts.app')]
+#[Layout('layouts.app.dashboard')]
 class RevenueBoard extends Component
 {
     use InteractsWithEvent;
@@ -111,11 +111,22 @@ class RevenueBoard extends Component
 
     public function render(): View
     {
+        $revenues = $this->event->revenues()->orderBy('category')->orderBy('description')->get();
+        $active = $revenues->reject(fn (Revenue $revenue): bool => $revenue->status === RevenueStatus::Cancelled);
+        $expected = (int) $active->sum('expected_amount');
+        $actual = (int) $active->sum('actual_amount');
+
         return view('livewire.finance.revenues', [
-            'revenues' => $this->event->revenues()->orderBy('description')->get(),
+            'revenues' => $revenues,
             'categories' => $this->categories(),
             'statuses' => RevenueStatus::cases(),
             'canEdit' => auth()->user()->can('manageFinance', $this->event),
+            'summary' => [
+                'expected' => $expected,
+                'actual' => $actual,
+                'remaining' => max(0, $expected - $actual),
+                'count' => $active->count(),
+            ],
         ])->title('Receitas · '.$this->event->name);
     }
 

@@ -3,6 +3,7 @@
 namespace App\Livewire\Events;
 
 use App\Domain\Events\PlanningTimelineBuilder;
+use App\Domain\Finance\CashflowPreview;
 use App\Domain\Finance\EventAlerts;
 use App\Domain\Finance\EventFinanceReader;
 use App\Domain\Finance\StatementBuilder;
@@ -23,6 +24,8 @@ class EventOverview extends Component
 
     public bool $ticketsGridExpanded = false;
 
+    public bool $cashflowGridExpanded = false;
+
     public function mount(\App\Models\Event $event): void
     {
         $this->mountEvent($event);
@@ -37,11 +40,21 @@ class EventOverview extends Component
         $this->ticketsGridExpanded = ! $this->ticketsGridExpanded;
     }
 
+    public function toggleCashflowGrid(): void
+    {
+        if (! auth()->user()->can('viewFinance', $this->event)) {
+            return;
+        }
+
+        $this->cashflowGridExpanded = ! $this->cashflowGridExpanded;
+    }
+
     public function render(
         EventFinanceReader $reader,
         StatementBuilder $builder,
         EventAlerts $alerts,
         PlanningTimelineBuilder $planningTimeline,
+        CashflowPreview $cashflowPreview,
     ): View {
         $input = $reader->read($this->event);
         $statement = $builder->statement($input);
@@ -100,6 +113,7 @@ class EventOverview extends Component
             'ticketTiers' => $ticketTiers,
             'ticketsSold' => $ticketsSold,
             'ticketsAvailable' => $ticketsAvailable,
+            'cashflowPreview' => $canFinance ? $cashflowPreview->forEvent($this->event) : null,
         ])->title($this->event->name);
     }
 }

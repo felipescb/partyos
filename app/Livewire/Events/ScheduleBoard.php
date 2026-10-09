@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Events;
 
+use App\Domain\Events\ScheduleFlow;
 use App\Livewire\Concerns\InteractsWithEvent;
 use App\Models\Event;
 use App\Models\ScheduleItem;
@@ -11,7 +12,7 @@ use Illuminate\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('layouts.app')]
+#[Layout('layouts.app.dashboard')]
 class ScheduleBoard extends Component
 {
     use InteractsWithEvent;
@@ -101,8 +102,10 @@ class ScheduleBoard extends Component
 
     public function render(): View
     {
+        $items = $this->event->scheduleItems()->with('vendor')->get();
+
         return view('livewire.events.schedule', [
-            'items' => $this->event->scheduleItems()->with('vendor')->get(),
+            'flow' => app(ScheduleFlow::class)->forEvent($this->event, $items),
             'vendors' => Vendor::query()->where('organization_id', auth()->user()->current_organization_id)->orderBy('name')->get(),
             'canEdit' => auth()->user()->can('manageOperations', $this->event),
         ])->title('Cronograma · '.$this->event->name);

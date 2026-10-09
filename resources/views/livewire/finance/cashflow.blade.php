@@ -1,27 +1,56 @@
-<div class="flex flex-col gap-5">
-    <div>
-        <flux:heading size="xl">Quando o dinheiro sai</flux:heading>
-        <flux:text>Não é só quanto o evento custa. É quando você precisa ter o valor na conta.</flux:text>
-    </div>
-    <div class="tile-grid">
-        @foreach (['today' => 'Hoje', '7' => '7 dias', '30' => '30 dias', 'all' => 'Tudo'] as $value => $label)
-            <x-tile type="button" size="sm" :current="(string) $value === $window" wire:click="$set('window', '{{ $value }}')">
-                <span class="tile-title">{{ $label }}</span>
-            </x-tile>
-        @endforeach
-    </div>
-    @if ($rows->isEmpty())
-        <x-empty-state title="Nada para pagar nessa janela." body="Lance custos com vencimento ou pagamentos agendados para ver a linha do tempo." />
-    @else
-        <div class="tile-grid">
-            @foreach ($rows as $row)
-                <x-tile as="div">
-                    <span class="tile-kicker">{{ $row['date'] ? \Illuminate\Support\Carbon::parse($row['date'])->format('d/m') : 'Sem data' }} · {{ $row['state'] }}</span>
-                    <span class="tile-title">{{ $row['label'] }}</span>
-                    <span class="tile-value"><x-money :cents="$row['amount']" :currency="$event->currency" /></span>
-                    <span class="tile-meta">{{ $row['detail'] }}</span>
-                </x-tile>
-            @endforeach
+@php
+    $windows = [
+        ['value' => 'today', 'label' => 'Hoje', 'tone' => 'atencao'],
+        ['value' => '7', 'label' => '7 dias', 'tone' => 'operacao'],
+        ['value' => '30', 'label' => '30 dias', 'tone' => 'equipe'],
+        ['value' => 'all', 'label' => 'Tudo', 'tone' => 'financeiro'],
+        ['value' => 'nodate', 'label' => 'Sem data', 'tone' => 'leitura'],
+    ];
+@endphp
+
+<div class="broker-cashflow-page">
+    <header class="broker-cashflow-head">
+        <a href="{{ route('events.show', $event) }}" wire:navigate class="broker-task-notebook-back">← Quadro</a>
+        <div>
+            <x-event-category-symbol category="quando" />
+            <h1 class="broker-cashflow-title">Fluxo</h1>
+            <p class="broker-cashflow-sub">{{ $event->name }} · quando o dinheiro sai</p>
         </div>
-    @endif
+    </header>
+
+    <div class="broker-grid broker-grid-event broker-grid-cashflow" role="list" aria-label="Quadro do fluxo">
+        @foreach ($windows as $card)
+            @php($summary = $summaries[$card['value']])
+            <div class="broker-grid-item" role="listitem">
+            <button
+                type="button"
+                @class([
+                    'broker-card broker-card-module broker-cashflow-card',
+                    'broker-cashflow-card-current' => $window === $card['value'],
+                ])
+                wire:click="$set('window', '{{ $card['value'] }}')"
+                aria-pressed="{{ $window === $card['value'] ? 'true' : 'false' }}"
+            >
+                <x-event-category-symbol :category="$card['tone']" :label="$card['label']" />
+                <span class="broker-card-name">{{ $card['label'] }}</span>
+                <span class="broker-card-quote"><x-money :cents="$summary['amount']" :currency="$event->currency" /></span>
+                <span class="broker-card-foot">{{ $summary['count'] }} {{ $summary['count'] === 1 ? 'saída' : 'saídas' }}</span>
+            </button>
+            </div>
+        @endforeach
+
+        <x-event-cashflow-chart
+            :series="$series"
+            :event="$event"
+            class="broker-grid-item"
+        />
+
+        <x-event-cashflow-timeline
+            :columns="$columns"
+            :event="$event"
+            :map="$map"
+            :grain="$grain"
+            class="broker-grid-item broker-cashflow-map"
+        />
+    </div>
 </div>

@@ -18,6 +18,7 @@
     <div class="broker-task-list" role="list" aria-label="Tarefas abertas">
         @forelse ($tasks as $task)
             @php($isDone = $task->status === \App\Enums\TaskStatus::Done)
+            @php($isLate = $task->due_on && ! $isDone && $task->due_on->isBefore(today()))
             <a
                 href="{{ route('events.tasks', $event) }}"
                 wire:navigate
@@ -29,17 +30,35 @@
                         <flux:icon.check variant="micro" class="size-3" />
                     @endif
                 </span>
-                <span class="broker-task-row-body">
-                    <span class="broker-task-title">{{ $task->title }}</span>
-                    <span class="broker-task-sub">
-                        {{ $task->status->label() }}
-                        @if ($task->due_on)
-                            · {{ $task->due_on->format('d/m') }}
-                        @endif
-                        @if ($task->priority === \App\Enums\TaskPriority::High)
-                            · {{ $task->priority->label() }}
-                        @endif
+                <span class="broker-task-title">{{ $task->title }}</span>
+                <span class="broker-task-marks">
+                    <span @class(['broker-task-mark', 'broker-task-status-'.$task->status->value]) title="{{ $task->status->label() }}" aria-label="{{ $task->status->label() }}">
+                        @switch ($task->status)
+                            @case (\App\Enums\TaskStatus::Backlog)
+                                <flux:icon.inbox variant="micro" />
+                                @break
+                            @case (\App\Enums\TaskStatus::Todo)
+                                <flux:icon.queue-list variant="micro" />
+                                @break
+                            @case (\App\Enums\TaskStatus::Doing)
+                                <flux:icon.play variant="micro" />
+                                @break
+                            @case (\App\Enums\TaskStatus::Blocked)
+                                <flux:icon.no-symbol variant="micro" />
+                                @break
+                            @default
+                                <flux:icon.check-circle variant="micro" />
+                        @endswitch
                     </span>
+                    <span @class(['broker-task-mark', 'broker-task-priority-'.$task->priority->value]) title="Prioridade {{ $task->priority->label() }}" aria-label="Prioridade {{ $task->priority->label() }}">
+                        <flux:icon.flag variant="micro" />
+                    </span>
+                    @if ($task->due_on)
+                        <span @class(['broker-task-due', 'broker-task-due-late' => $isLate]) title="Prazo {{ $task->due_on->format('d/m/Y') }}" aria-label="Prazo {{ $task->due_on->format('d/m') }}{{ $isLate ? ', atrasada' : '' }}">
+                            <flux:icon.calendar variant="micro" />
+                            <span>{{ $task->due_on->format('d/m') }}</span>
+                        </span>
+                    @endif
                 </span>
             </a>
         @empty

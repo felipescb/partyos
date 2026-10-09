@@ -9,7 +9,9 @@
             </div>
         </div>
         @if ($canEdit)
-            <flux:button variant="primary" wire:click="create" size="sm">Novo custo</flux:button>
+            <button type="button" class="broker-card-icon-btn" wire:click="create" aria-label="Novo custo" title="Novo custo">
+                <flux:icon.plus variant="mini" class="size-4" />
+            </button>
         @endif
     </header>
 

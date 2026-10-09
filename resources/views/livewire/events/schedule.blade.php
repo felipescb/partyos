@@ -1,31 +1,42 @@
-<div class="flex flex-col gap-5">
-    <div class="flex flex-wrap items-end justify-between gap-3">
+<div class="broker-schedule-page">
+    <header class="broker-cashflow-head">
+        <a href="{{ route('events.show', $event) }}" wire:navigate class="broker-task-notebook-back">← Quadro</a>
         <div>
-            <flux:heading size="xl">Cronograma</flux:heading>
-            <flux:text>Do load-in ao último parafuso. No dia, é esta lista que importa.</flux:text>
+            <x-event-category-symbol category="quando" />
+            <h1 class="broker-cashflow-title">Cronograma</h1>
+            <p class="broker-cashflow-sub">{{ $event->name }} · o timeflow da festa</p>
         </div>
-        @if ($canEdit)
-            <flux:button variant="primary" wire:click="create">Novo horário</flux:button>
-        @endif
+    </header>
+
+    <div class="broker-grid broker-grid-event" role="list" aria-label="Quadro do cronograma">
+        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="quando" label="Portas" />
+            <span class="broker-card-name">Portas</span>
+            <span class="broker-card-quote">{{ $flow['doors']['clock'] }}</span>
+            <span class="broker-card-foot">{{ $flow['doors']['foot'] }}</span>
+        </article>
+        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="atencao" label="Fecha" />
+            <span class="broker-card-name">Fecha</span>
+            <span class="broker-card-quote">{{ $flow['close']['clock'] }}</span>
+            <span class="broker-card-foot">{{ $flow['close']['foot'] }}</span>
+        </article>
+        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="ao-vivo" label="No ar" />
+            <span class="broker-card-name">No ar</span>
+            <span class="broker-card-quote">{{ $flow['span']['value'] }}</span>
+            <span class="broker-card-foot">{{ $flow['span']['foot'] }}</span>
+        </article>
+        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="leitura" label="Blocos" />
+            <span class="broker-card-name">Blocos</span>
+            <span class="broker-card-quote">{{ $flow['blocks']['value'] }}</span>
+            <span class="broker-card-foot">{{ $flow['blocks']['foot'] }}</span>
+        </article>
+
+        <x-event-schedule-flow :flow="$flow" :can-edit="$canEdit" class="broker-grid-item" />
     </div>
-    @if ($items->isEmpty())
-        <x-empty-state title="O dia ainda não tem horários." body="Montagem, soundcheck, abertura, encerramento. Um template já sugere a espinha dorsal.">
-            @if ($canEdit)
-                <flux:button variant="primary" wire:click="create">Novo horário</flux:button>
-            @endif
-        </x-empty-state>
-    @else
-        <div class="tile-grid">
-            @foreach ($items as $item)
-                <x-tile type="button" wire:click="edit({{ $item->id }})">
-                    <span class="tile-kicker">{{ $item->location ?: 'Sem lugar' }}</span>
-                    <span class="tile-value">{{ $item->starts_at?->format('H:i') ?? '—' }}</span>
-                    <span class="tile-title">{{ $item->title }}</span>
-                    <span class="tile-meta">{{ $item->duration_minutes ? $item->duration_minutes.' min' : 'Sem duração' }}</span>
-                </x-tile>
-            @endforeach
-        </div>
-    @endif
+
     <flux:modal wire:model="showForm" class="max-w-lg">
         <form wire:submit="save" class="space-y-4">
             <flux:heading size="lg">{{ $editingId ? 'Editar horário' : 'Novo horário' }}</flux:heading>

@@ -232,7 +232,9 @@
                 placeholder="Novo custo… Enter para adicionar"
                 aria-label="Novo custo"
             />
-            <flux:button variant="primary" type="submit" size="sm">Adicionar</flux:button>
+            <button type="submit" class="broker-card-icon-btn" aria-label="Adicionar custo" title="Adicionar">
+                <flux:icon.plus variant="mini" class="size-4" />
+            </button>
             <flux:error name="newDescription" />
         </form>
     @endif

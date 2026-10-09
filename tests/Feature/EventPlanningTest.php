@@ -181,6 +181,69 @@ class EventPlanningTest extends TestCase
             ->assertSee('1º lote');
     }
 
+    public function test_event_overview_cashflow_grid_samples_upcoming_days_and_weeks(): void
+    {
+        $user = User::factory()->create();
+        $event = app(CreateEvent::class)->handle($user, [
+            'name' => 'Festa fluxo',
+            'type' => EventType::Party,
+            'starts_at' => now()->addDays(40),
+        ]);
+        $budget = $event->budget;
+
+        $past = $event->budgetItems()->create([
+            'budget_id' => $budget->id,
+            'description' => 'Ja pago ontem',
+            'estimated_amount' => 1_000,
+            'contracted_amount' => 1_000,
+            'due_on' => now()->subDay()->toDateString(),
+            'status' => CostStatus::Paid,
+        ]);
+        $past->payments()->create([
+            'event_id' => $event->id,
+            'amount' => 1_000,
+            'paid_on' => now()->subDay()->toDateString(),
+            'status' => PaymentStatus::Paid,
+        ]);
+
+        foreach (range(1, 6) as $day) {
+            $event->budgetItems()->create([
+                'budget_id' => $budget->id,
+                'description' => 'Dia perto '.$day,
+                'estimated_amount' => 1_000,
+                'due_on' => now()->addDays($day)->toDateString(),
+                'status' => CostStatus::Planned,
+            ]);
+        }
+
+        foreach (range(1, 6) as $week) {
+            $event->budgetItems()->create([
+                'budget_id' => $budget->id,
+                'description' => 'Semana longe '.$week,
+                'estimated_amount' => 2_000,
+                'due_on' => now()->addDays(9 + ($week * 7))->toDateString(),
+                'status' => CostStatus::Planned,
+            ]);
+        }
+
+        Livewire::actingAs($user)
+            ->test(EventOverview::class, ['event' => $event])
+            ->assertSee('Fluxo')
+            ->assertSee('Ampliar fluxo')
+            ->assertDontSee('Ja pago ontem')
+            ->assertDontSee('Dia perto 6')
+            ->assertDontSee('Semana longe 6')
+            ->call('toggleCashflowGrid')
+            ->assertSet('cashflowGridExpanded', true)
+            ->assertSee('Ver o fluxo todo')
+            ->assertSee('Próximos dias')
+            ->assertSee('Dia perto 1')
+            ->assertSee('Próximas semanas')
+            ->assertSee('Semana longe 1')
+            ->assertDontSee('Dia perto 5')
+            ->assertDontSee('Semana longe 5');
+    }
+
     public function test_owner_can_add_team_member_from_event_overview(): void
     {
         $owner = User::factory()->create();

@@ -1,31 +1,42 @@
-<div class="flex flex-col gap-5">
-    <div class="flex flex-wrap items-end justify-between gap-3">
+<div class="broker-revenue-page">
+    <header class="broker-cashflow-head">
+        <a href="{{ route('events.show', $event) }}" wire:navigate class="broker-task-notebook-back">← Quadro</a>
         <div>
-            <flux:heading size="xl">Receitas</flux:heading>
-            <flux:text>Ingressos ficam na aba de lotes. Aqui entra o resto: bar, patrocínio, porta, merch.</flux:text>
+            <x-event-category-symbol category="financeiro" />
+            <h1 class="broker-cashflow-title">Receitas</h1>
+            <p class="broker-cashflow-sub">{{ $event->name }} · receitas adicionais além dos ingressos</p>
         </div>
-        @if ($canEdit)
-            <flux:button variant="primary" wire:click="create">Adicionar receita</flux:button>
-        @endif
+    </header>
+
+    <div class="broker-grid broker-grid-event broker-grid-revenue" role="list" aria-label="Quadro das receitas extras">
+        @foreach ([
+            ['label' => 'Previsto', 'tone' => 'leitura', 'cents' => $summary['expected'], 'foot' => 'Receitas adicionais além dos ingressos'],
+            ['label' => 'Entrou', 'tone' => 'ao-vivo', 'cents' => $summary['actual'], 'foot' => 'Já no caixa'],
+            ['label' => 'Falta', 'tone' => 'atencao', 'cents' => $summary['remaining'], 'foot' => 'Ainda por entrar'],
+        ] as $card)
+            <article class="broker-grid-item broker-card broker-card-module" role="listitem">
+                <x-event-category-symbol :category="$card['tone']" :label="$card['label']" />
+                <span class="broker-card-name">{{ $card['label'] }}</span>
+                <span class="broker-card-quote"><x-money :cents="$card['cents']" :currency="$event->currency" /></span>
+                <span class="broker-card-foot">{{ $card['foot'] }}</span>
+            </article>
+        @endforeach
+
+        <article class="broker-grid-item broker-card broker-card-module" role="listitem">
+            <x-event-category-symbol category="financeiro" label="Linhas" />
+            <span class="broker-card-name">Linhas</span>
+            <span class="broker-card-quote">{{ $summary['count'] }}</span>
+            <span class="broker-card-foot">{{ $summary['count'] === 1 ? 'Receita extra' : 'Receitas extras' }}</span>
+        </article>
+
+        <x-event-revenue-table
+            :event="$event"
+            :revenues="$revenues"
+            :can-edit="$canEdit"
+            class="broker-grid-item"
+        />
     </div>
-    @if ($revenues->isEmpty())
-        <x-empty-state title="Nenhuma receita além dos ingressos." body="Se o bar, um patrocinador ou a porta entram no caixa, registre aqui.">
-            @if ($canEdit)
-                <flux:button variant="primary" wire:click="create">Adicionar receita</flux:button>
-            @endif
-        </x-empty-state>
-    @else
-        <div class="tile-grid">
-            @foreach ($revenues as $revenue)
-                <x-tile type="button" wire:click="edit({{ $revenue->id }})">
-                    <span class="tile-kicker">{{ $revenue->category->label() }} · {{ $revenue->status->label() }}</span>
-                    <span class="tile-title">{{ $revenue->description }}</span>
-                    <span class="tile-value"><x-money :cents="$revenue->actual_amount" :currency="$event->currency" /></span>
-                    <span class="tile-meta">Previsto <x-money :cents="$revenue->expected_amount" :currency="$event->currency" /></span>
-                </x-tile>
-            @endforeach
-        </div>
-    @endif
+
     <flux:modal wire:model="showForm" class="max-w-lg">
         <form wire:submit="save" class="space-y-4">
             <flux:heading size="lg">{{ $editingId ? 'Editar receita' : 'Nova receita' }}</flux:heading>

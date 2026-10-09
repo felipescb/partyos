@@ -78,7 +78,7 @@
             <x-event-category-symbol category="financeiro" />
             <span class="broker-card-name">Receitas</span>
             <span class="broker-card-quote"><x-money :cents="$statement->expectedOtherRevenue" :currency="$event->currency" /></span>
-            <span class="broker-card-foot">Fora dos ingressos</span>
+            <span class="broker-card-foot">Receitas adicionais além dos ingressos</span>
         </a>
         <a href="{{ route('events.close', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
             <x-event-category-symbol category="financeiro" />
@@ -100,17 +100,11 @@
                 <span class="broker-card-foot">pessoas para empatar</span>
             @endif
         </a>
-        <a href="{{ route('events.cashflow', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
-            <x-event-category-symbol category="financeiro" />
-            <span class="broker-card-name">Fluxo</span>
-            @if ($payments->isNotEmpty())
-                <span class="broker-card-quote"><x-money :cents="$payments->sum('amount')" :currency="$event->currency" /></span>
-                <span class="broker-card-foot">{{ $payments->count() }} saídas agendadas</span>
-            @else
-                <span class="broker-card-quote broker-card-quote-muted">—</span>
-                <span class="broker-card-foot">Nada agendado</span>
-            @endif
-        </a>
+        <x-event-cashflow-grid
+            :event="$event"
+            :preview="$cashflowPreview"
+            class="broker-grid-item"
+        />
         <a href="{{ route('events.distribution', $event) }}" wire:navigate class="broker-grid-item broker-card broker-card-module" role="listitem">
             <x-event-category-symbol category="financeiro" />
             <span class="broker-card-name">Divisão</span>

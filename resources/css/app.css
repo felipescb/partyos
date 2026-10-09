@@ -428,6 +428,25 @@ button.tile {
     padding: 0 0.75rem;
 }
 
+.broker-shell .tile-strip-bar,
+.broker-shell .tile-dock {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    flex-shrink: 0;
+}
+
+.broker-shell .tile-strip-bar {
+    border-top: 1px solid var(--color-line);
+    background: var(--color-zinc-50);
+}
+
+.broker-shell:has(.tile-strip-bar) .broker-cost-notebook {
+    height: 100%;
+    margin-bottom: 0;
+}
+
 .tile-strip {
     display: flex;
     gap: 0.6rem;
@@ -657,9 +676,20 @@ select[data-flux-control] {
 /* macOS-style status bar + homebroker dashboard */
 
 .broker-shell {
+    --tile-bg: var(--color-canvas);
+    --tile-fg: var(--color-ink);
+    --tile-line: var(--color-line);
+    --tile-stage: var(--color-canvas);
+    --tile-muted: var(--color-silver);
+    --tile-kicker: var(--color-steel);
+    --tile-accent: var(--color-brand);
+    --tile-accent-fg: var(--color-canvas);
+    --tile-shadow: var(--shadow-whisper);
     display: flex;
     flex-direction: column;
+    height: 100dvh;
     min-height: 100dvh;
+    overflow: hidden;
     background: var(--color-zinc-50);
     color: var(--color-ink);
 }
@@ -1130,8 +1160,9 @@ a.broker-card:hover {
     flex-direction: column;
     gap: var(--broker-grid-gap);
     min-width: 0;
-    height: var(--broker-intro-max-height);
-    max-height: var(--broker-intro-max-height);
+    height: auto;
+    min-height: 0;
+    max-height: none;
     overflow: hidden;
 }
 
@@ -1154,8 +1185,10 @@ a.broker-card:hover {
 }
 
 .broker-event-intro-stack > .broker-task-panel.broker-card {
-    height: auto;
-    min-height: 0;
+    flex: 0 0 calc(15.75rem * 1.15);
+    height: calc(15.75rem * 1.15);
+    min-height: calc(15.75rem * 1.15);
+    max-height: calc(15.75rem * 1.15);
 }
 
 .broker-event-intro-stack > .broker-card-hero {
@@ -1166,19 +1199,18 @@ a.broker-card:hover {
 }
 
 .broker-event-intro-stack > .broker-task-panel {
-    flex: 1 1 0;
-    min-height: 0;
-    max-height: none;
+    flex: 0 0 calc(15.75rem * 1.15);
+    max-height: calc(15.75rem * 1.15);
 }
 
 .broker-event-intro-stack > .broker-team-panel {
     flex: 0 0 auto;
-    min-height: 0;
-    max-height: min(11.5rem, 38%);
+    min-height: calc(8.375rem * 1.1);
+    max-height: calc(11.5rem * 1.1);
 }
 
 .broker-event-intro-stack > .broker-team-panel .broker-team-list {
-    max-height: 6.5rem;
+    max-height: calc(6.5rem * 1.1);
 }
 
 .broker-event-intro-stack > .broker-event-team {
@@ -1429,9 +1461,9 @@ a.broker-card-alert:hover {
 
 .broker-task-row {
     display: flex;
-    align-items: flex-start;
-    gap: 0.55rem;
-    padding: 0.55rem 0.75rem;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.22rem 0.65rem;
     border-bottom: 1px solid var(--color-line);
     color: inherit;
     text-decoration: none;
@@ -1461,10 +1493,14 @@ a.broker-card-alert:hover {
     flex-shrink: 0;
     width: 1rem;
     height: 1rem;
-    margin-top: 0.15rem;
     border: 1.5px solid var(--color-zinc-300);
     background: var(--color-canvas);
     color: var(--color-positive-ink);
+}
+
+.broker-event-tasks .broker-task-check {
+    width: 0.85rem;
+    height: 0.85rem;
 }
 
 .broker-task-check-done {
@@ -1472,31 +1508,87 @@ a.broker-card-alert:hover {
     background: var(--color-positive-soft);
 }
 
-.broker-task-row-body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    min-width: 0;
-    flex: 1;
-}
-
 .broker-task-title {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 13px;
+    min-width: 0;
+    flex: 1;
+    font-size: 12.5px;
     font-weight: 500;
-    line-height: 1.35;
+    line-height: 1.2;
     color: var(--color-ink);
 }
 
-.broker-task-sub {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 11px;
-    line-height: 1.3;
+.broker-task-marks {
+    display: flex;
+    align-items: center;
+    gap: 0.28rem;
+    flex-shrink: 0;
+}
+
+.broker-task-mark {
+    display: grid;
+    place-items: center;
+    width: 0.95rem;
+    height: 0.95rem;
+}
+
+.broker-task-mark svg {
+    width: 0.8rem;
+    height: 0.8rem;
+}
+
+.broker-task-status-backlog {
     color: var(--color-silver);
+}
+
+.broker-task-status-todo {
+    color: var(--color-steel);
+}
+
+.broker-task-status-doing {
+    color: var(--color-brand);
+}
+
+.broker-task-status-blocked {
+    color: var(--broker-cat-atencao-ink);
+}
+
+.broker-task-status-done {
+    color: var(--color-positive);
+}
+
+.broker-task-priority-low {
+    color: var(--color-zinc-300);
+}
+
+.broker-task-priority-medium {
+    color: var(--broker-cat-olhar-ink);
+}
+
+.broker-task-priority-high {
+    color: var(--broker-cat-atencao-ink);
+}
+
+.broker-task-due {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--color-steel);
+}
+
+.broker-task-due svg {
+    width: 0.7rem;
+    height: 0.7rem;
+}
+
+.broker-task-due-late {
+    color: var(--broker-cat-atencao-ink);
+    font-weight: 600;
 }
 
 .broker-task-empty {
@@ -1888,6 +1980,77 @@ a.broker-card-alert:hover {
 .broker-ticket-row-link {
     text-decoration: none;
     color: inherit;
+}
+
+.broker-cashflow-sample-scroll {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 0;
+    overflow: auto;
+    padding: 0.65rem 0.75rem 0.85rem;
+}
+
+.broker-cashflow-sample-heading {
+    margin: 0 0 0.15rem;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-steel);
+}
+
+.broker-cashflow-sample-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.broker-cashflow-sample-row {
+    display: grid;
+    grid-template-columns: 3.4rem minmax(0, 1fr) auto;
+    gap: 0.15rem 0.6rem;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--color-line);
+}
+
+.broker-cashflow-sample-when {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--cost-cat-ink, var(--color-brand));
+}
+
+.broker-cashflow-sample-title {
+    display: block;
+    overflow: hidden;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--color-ink);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.broker-cashflow-sample-meta {
+    display: block;
+    font-size: 10px;
+    line-height: 1.3;
+    color: var(--color-steel);
+}
+
+.broker-cashflow-sample-amount {
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+}
+
+.broker-cashflow-sample-empty {
+    margin: 0;
+    font-size: 12px;
+    color: var(--color-steel);
 }
 
 .broker-timeline-panel {
@@ -2500,7 +2663,7 @@ a.broker-card-alert:hover {
 }
 
 .broker-task-notebook-back {
-    font-size: 11px;
+    font-size: 13.2px;
     font-weight: 500;
     color: var(--color-brand);
     text-decoration: none;
@@ -2512,7 +2675,7 @@ a.broker-card-alert:hover {
 
 .broker-task-notebook-title {
     margin: 0.1rem 0 0;
-    font-size: 1.15rem;
+    font-size: 1.38rem;
     font-weight: 600;
     line-height: 1.25;
     color: var(--color-ink);
@@ -2813,15 +2976,7 @@ a.broker-card-alert:hover {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    min-height: calc(100dvh - 2.75rem);
-    padding: 0.75rem;
-}
-
-@media (min-width: 720px) {
-    .broker-tickets-page {
-        gap: 0.85rem;
-        padding: 0.85rem;
-    }
+    min-height: 100%;
 }
 
 .broker-tickets-head {
@@ -2847,7 +3002,7 @@ a.broker-card-alert:hover {
 
 .broker-tickets-title {
     margin: 0.1rem 0 0;
-    font-size: 1.15rem;
+    font-size: 1.38rem;
     font-weight: 600;
     line-height: 1.25;
     color: var(--color-ink);
@@ -3244,6 +3399,746 @@ a.broker-card-alert:hover {
 
 .broker-cost-compose {
     grid-template-columns: minmax(12rem, 1fr) auto;
+}
+
+.broker-cost-compose .broker-card-icon-btn {
+    align-self: center;
+}
+
+.broker-cashflow-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 100%;
+}
+
+.broker-cashflow-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.broker-cashflow-title {
+    margin: 0.1rem 0 0;
+    font-size: 1.38rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--color-ink);
+}
+
+.broker-task-notebook-head .broker-card-symbol,
+.broker-tickets-head .broker-card-symbol,
+.broker-cashflow-head .broker-card-symbol {
+    font-size: 13.2px;
+    padding: 0.14rem 0.48rem;
+}
+
+.broker-cashflow-sub {
+    margin: 0.1rem 0 0;
+    font-size: 12px;
+    color: var(--color-steel);
+}
+
+.broker-grid-cashflow {
+    flex: 1;
+}
+
+@media (min-width: 800px) {
+    .broker-grid.broker-grid-cashflow {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+.broker-grid-cashflow > .broker-grid-item:not(.broker-cashflow-map) {
+    display: flex;
+    height: 100%;
+}
+
+button.broker-card {
+    appearance: none;
+    width: 100%;
+    height: 100%;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+button.broker-cashflow-card:hover {
+    border-color: var(--color-zinc-300);
+}
+
+.broker-cashflow-card-current {
+    border-color: var(--color-brand);
+    background: var(--color-brand-soft);
+}
+
+.broker-grid-event > .broker-cashflow-evolution.broker-card {
+    grid-column: 1 / -1;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    align-self: stretch;
+}
+
+.broker-grid-event > .broker-cashflow-map.broker-card {
+    grid-column: 1 / -1;
+    height: auto;
+    min-height: min(36rem, calc(100dvh - 16rem));
+    max-height: calc(100dvh - 12rem);
+    align-self: stretch;
+}
+
+.broker-cashflow-map {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+}
+
+.broker-cashflow-map-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.35rem 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid var(--color-line);
+    background: var(--color-zinc-50);
+}
+
+.broker-cashflow-map-title {
+    margin: 0.1rem 0 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--color-ink);
+}
+
+.broker-cashflow-map-range {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-steel);
+    white-space: nowrap;
+}
+
+.broker-cashflow-modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.broker-cashflow-map-switch {
+    display: inline-flex;
+    border: 1px solid var(--color-line);
+    background: var(--color-canvas);
+}
+
+.broker-cashflow-map-switch button {
+    border: 0;
+    background: transparent;
+    padding: 0.28rem 0.6rem;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-steel);
+    cursor: pointer;
+}
+
+.broker-cashflow-map-switch button[aria-pressed="true"] {
+    background: var(--color-brand-soft);
+    color: var(--color-brand);
+}
+
+.broker-cashflow-map-empty {
+    padding: 1.25rem 0.85rem;
+    font-size: 12px;
+    color: var(--color-steel);
+}
+
+.broker-cashflow-map-empty p {
+    margin: 0 0 0.25rem;
+}
+
+.broker-cashflow-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding: 0.85rem 0.75rem 1rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.broker-cashflow-track {
+    display: flex;
+    align-items: flex-start;
+    min-width: min-content;
+    min-height: 100%;
+}
+
+.broker-cashflow-day {
+    flex: 0 0 15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-height: 18rem;
+    padding: 0 0.45rem;
+}
+
+.broker-cashflow-day-past {
+    opacity: 0.72;
+}
+
+.broker-cashflow-day-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    min-height: 4.4rem;
+}
+
+.broker-cashflow-day-date {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--color-ink);
+}
+
+.broker-cashflow-day-week {
+    font-size: 11px;
+    color: var(--color-steel);
+    text-transform: capitalize;
+}
+
+.broker-cashflow-day-total {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-ink);
+}
+
+.broker-cashflow-day-badge {
+    align-self: flex-start;
+    margin-top: 0.15rem;
+    padding: 0.05rem 0.3rem;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-positive-ink);
+    background: var(--color-positive-soft);
+    border: 1px solid var(--color-positive);
+}
+
+.broker-cashflow-day-badge-now {
+    color: var(--color-brand);
+    background: var(--color-canvas);
+    border-color: var(--color-brand);
+}
+
+.broker-cashflow-day-today {
+    background: var(--color-brand-soft);
+}
+
+.broker-cashflow-day-event {
+    background: var(--color-positive-soft);
+}
+
+.broker-cashflow-day-undated {
+    background: var(--color-zinc-50);
+}
+
+.broker-cashflow-rail {
+    position: relative;
+    height: 1.1rem;
+}
+
+.broker-cashflow-rail-line {
+    position: absolute;
+    top: 50%;
+    left: -0.45rem;
+    right: -0.45rem;
+    height: 2px;
+    background: var(--color-line);
+}
+
+.broker-cashflow-node {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 1;
+    width: 0.55rem;
+    height: 0.55rem;
+    margin: -0.275rem 0 0 -0.275rem;
+    border: 2px solid var(--cost-cat-ink, var(--color-zinc-300));
+    background: var(--color-canvas);
+}
+
+.broker-cashflow-day-undated .broker-cashflow-node,
+.broker-cashflow-day-category .broker-cashflow-node {
+    border-color: var(--cost-cat-ink, var(--color-zinc-300));
+    background: var(--cost-cat-ink, var(--color-zinc-300));
+}
+
+.broker-cashflow-node-active {
+    border-color: var(--color-brand);
+    background: var(--color-brand);
+}
+
+.broker-cashflow-day-event .broker-cashflow-node-active {
+    border-color: var(--color-positive);
+    background: var(--color-positive);
+}
+
+.broker-cashflow-events {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.broker-cashflow-event {
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    min-height: 4.2rem;
+    padding: 0.4rem 0.45rem;
+    border: 1px solid var(--color-line);
+    border-left: 3px solid var(--cost-cat-ink, var(--color-zinc-400));
+    background: var(--cost-cat-soft, var(--color-canvas));
+}
+
+.broker-cashflow-event-paid {
+    opacity: 0.72;
+}
+
+.broker-cashflow-event-empty {
+    justify-content: center;
+    align-items: center;
+    color: var(--color-silver);
+    font-size: 11px;
+    border-style: dashed;
+    border-left-width: 1px;
+    background: transparent;
+}
+
+.broker-cashflow-event-kind {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-silver);
+}
+
+.broker-cashflow-event-title {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--color-ink);
+}
+
+.broker-cashflow-event-amount {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-ink);
+}
+
+.broker-cashflow-event-meta {
+    font-size: 10px;
+    line-height: 1.3;
+    color: var(--color-steel);
+}
+
+.broker-cashflow-chart-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-height: 0;
+    padding: 0.2rem 0.75rem 0.55rem;
+}
+
+.broker-cashflow-chart-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.broker-cashflow-chart-grid {
+    stroke: var(--color-line);
+    stroke-width: 1;
+}
+
+.broker-cashflow-chart-axis {
+    stroke: var(--color-zinc-300);
+    stroke-width: 1;
+}
+
+.broker-cashflow-chart-axis-label,
+.broker-cashflow-chart-tick,
+.broker-cashflow-chart-guide-label {
+    fill: var(--color-steel);
+    font-size: 9px;
+    font-family: inherit;
+}
+
+.broker-cashflow-chart-guide {
+    stroke: var(--color-brand);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+}
+
+.broker-cashflow-chart-bar {
+    fill: color-mix(in srgb, var(--color-brand) 28%, white);
+}
+
+.broker-cashflow-chart-bar-event {
+    fill: var(--color-brand);
+}
+
+.broker-cashflow-chart-bar-today {
+    stroke: var(--color-ink);
+    stroke-width: 1.5;
+}
+
+.broker-cashflow-chart-bar-paid {
+    fill: var(--color-positive);
+}
+
+.broker-cashflow-chart-value {
+    fill: var(--color-ink);
+    font-size: 9px;
+    font-weight: 600;
+    font-family: inherit;
+}
+
+.broker-cashflow-chart-tick-event {
+    fill: var(--color-brand);
+    font-weight: 700;
+}
+
+.broker-cashflow-chart-legend {
+    display: flex;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 11px;
+    color: var(--color-steel);
+}
+
+.broker-cashflow-chart-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.broker-cashflow-chart-swatch {
+    width: 0.85rem;
+    height: 0.35rem;
+}
+
+.broker-cashflow-chart-swatch-total {
+    background: var(--color-brand);
+}
+
+.broker-cashflow-chart-swatch-paid {
+    background: var(--color-positive);
+}
+
+.broker-cashflow-chart-note {
+    margin: 0;
+    font-size: 11px;
+    color: var(--color-steel);
+}
+
+.broker-revenue-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 100%;
+}
+
+.broker-grid-event > .broker-revenue-sheet.broker-card {
+    grid-column: 1 / -1;
+    height: auto;
+    min-height: 16rem;
+    max-height: none;
+    align-self: stretch;
+    padding: 0;
+    overflow: hidden;
+}
+
+.broker-revenue-sheet {
+    display: flex;
+    flex-direction: column;
+}
+
+.broker-revenue-sheet .broker-cost-scroll {
+    flex: 1;
+    min-height: 0;
+}
+
+.broker-revenue-columns,
+.broker-revenue-row {
+    grid-template-columns:
+        minmax(10rem, 1.6fr)
+        minmax(6.5rem, 0.8fr)
+        minmax(6.5rem, 0.7fr)
+        minmax(6.5rem, 0.7fr)
+        minmax(6rem, 0.7fr)
+        minmax(5.5rem, 0.6fr);
+    width: 100%;
+    min-width: 0;
+}
+
+.broker-revenue-row {
+    position: relative;
+}
+
+.broker-revenue-row-hit {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.broker-revenue-sheet .broker-cost-cell-category {
+    left: auto;
+    position: static;
+}
+
+.broker-revenue-sheet .broker-cost-cell-item {
+    z-index: 1;
+}
+
+.broker-schedule-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 100%;
+}
+
+.broker-grid-event > .broker-schedule-flow.broker-card {
+    grid-column: 1 / -1;
+    height: auto;
+    min-height: 22rem;
+    max-height: none;
+    align-self: stretch;
+    padding: 0;
+    overflow: hidden;
+}
+
+.broker-schedule-flow {
+    display: flex;
+    flex-direction: column;
+}
+
+.broker-schedule-head-end {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.broker-schedule-scroll {
+    padding: 0.9rem 0.85rem 1.15rem;
+}
+
+.broker-schedule-rail {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.broker-schedule-rail::before {
+    content: "";
+    position: absolute;
+    top: 0.35rem;
+    bottom: 0.35rem;
+    left: 5.55rem;
+    width: 2px;
+    background: var(--color-line);
+}
+
+.broker-schedule-day {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin: 0.85rem 0 0.15rem;
+    padding-left: 6.35rem;
+    font-size: 11px;
+    color: var(--color-steel);
+}
+
+.broker-schedule-day:first-child {
+    margin-top: 0;
+}
+
+.broker-schedule-day-kicker {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+}
+
+.broker-schedule-beat {
+    display: grid;
+    grid-template-columns: 4.5rem 1rem minmax(0, 1fr);
+    column-gap: 0.55rem;
+    align-items: center;
+    width: 100%;
+    min-height: 2.35rem;
+    padding: 0.28rem 0.35rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+div.broker-schedule-beat {
+    cursor: default;
+}
+
+.broker-schedule-beat:hover {
+    background: var(--color-zinc-50);
+}
+
+.broker-schedule-when {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.05rem;
+    line-height: 1.1;
+}
+
+.broker-schedule-clock {
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink);
+}
+
+.broker-schedule-code {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--schedule-ink, var(--color-steel));
+}
+
+.broker-schedule-node {
+    position: relative;
+    z-index: 1;
+    justify-self: center;
+    width: 0.55rem;
+    height: 0.55rem;
+    border: 2px solid var(--schedule-ink, var(--color-zinc-400));
+    background: var(--color-canvas);
+}
+
+.broker-schedule-body {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.broker-schedule-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-ink);
+}
+
+.broker-schedule-meta {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 11px;
+    color: var(--color-steel);
+}
+
+.broker-schedule-beat-prep {
+    --schedule-ink: var(--broker-cat-operacao-ink);
+}
+
+.broker-schedule-beat-doors {
+    --schedule-ink: var(--color-brand);
+}
+
+.broker-schedule-beat-doors .broker-schedule-node {
+    background: var(--color-brand);
+}
+
+.broker-schedule-beat-night {
+    --schedule-ink: var(--broker-cat-ao-vivo-ink);
+}
+
+.broker-schedule-beat-current .broker-schedule-node {
+    box-shadow: 0 0 0 3px var(--color-brand-soft);
+}
+
+.broker-schedule-now {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-brand);
+}
+
+.broker-schedule-undated {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-line);
+}
+
+.broker-schedule-open {
+    margin: 0.35rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.broker-schedule-open-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.4rem 0.35rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+div.broker-schedule-open-row {
+    cursor: default;
+}
+
+.broker-schedule-open-row:hover {
+    background: var(--color-zinc-50);
+}
+
+.broker-schedule-empty {
+    padding: 1.25rem 0.85rem;
+    font-size: 12px;
+    color: var(--color-steel);
+}
+
+.broker-schedule-empty p {
+    margin: 0 0 0.25rem;
 }
 
 /* \[:where(&)\]:size-4 {

@@ -31,4 +31,17 @@ enum RevenueCategory: string
     {
         return $this !== self::Tickets;
     }
+
+    public function colorSlug(): string
+    {
+        return match ($this) {
+            self::Bar => 'bar',
+            self::Sponsorship => 'marketing',
+            self::Merch => 'compras',
+            self::Door => 'staff',
+            self::Partners => 'artistas',
+            self::Sales => 'outros',
+            self::Tickets, self::Other => 'none',
+        };
+    }
 }
