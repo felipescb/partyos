@@ -51,9 +51,11 @@
             </div>
         </form>
 
-        <div class="space-x-1 text-center text-base text-steel rtl:space-x-reverse">
-            <span>{{ __('Don\'t have an account?') }}</span>
-            <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
-        </div>
+        @if (Route::has('register'))
+            <div class="space-x-1 text-center text-base text-steel rtl:space-x-reverse">
+                <span>{{ __('Don\'t have an account?') }}</span>
+                <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
+            </div>
+        @endif
     </div>
 </x-layouts::auth>

@@ -161,7 +161,7 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        ...(filter_var(env('PARTYOS_ALLOW_REGISTRATION', true), FILTER_VALIDATE_BOOLEAN) ? [Features::registration()] : []),
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

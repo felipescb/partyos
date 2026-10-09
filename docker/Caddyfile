@@ -1,0 +1,16 @@
+{
+	admin off
+	persist_config off
+	frankenphp
+	servers {
+		trusted_proxies static 127.0.0.1/8 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16
+	}
+}
+
+:80 {
+	root * /app/public
+	encode zstd gzip
+	php_server {
+		try_files {path} index.php
+	}
+}

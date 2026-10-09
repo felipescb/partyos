@@ -1,0 +1,46 @@
+# PartyOS no ZimaOS (ou qualquer Docker).
+#
+# Na máquina com o código:
+#   docker compose build
+#   docker compose up -d
+#
+# No Zima, se a imagem foi carregada de outro computador (`docker load`),
+# suba com o mesmo arquivo. Os dados ficam no volume `partyos-data`.
+# Para vê-los no app Arquivos do ZimaOS:
+#   PARTYOS_DATA_PATH=/DATA/AppData/partyos docker compose up -d
+#
+# Antes da primeira subida, troque PARTYOS_APP_URL pela URL real (com http ou https)
+# e, se quiser escolher a senha, preencha ADMIN_PASSWORD.
+# Senha vazia: o container gera uma e grava em
+# storage/app/private/initial-admin-password.txt dentro do volume.
+
+services:
+  partyos:
+    image: partyos:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    container_name: partyos
+    restart: unless-stopped
+    ports:
+      - "${PARTYOS_PORT:-8080}:80"
+    environment:
+      APP_NAME: PartyOS
+      APP_URL: ${PARTYOS_APP_URL:-http://127.0.0.1:8080}
+      APP_DEBUG: "false"
+      ADMIN_NAME: ${ADMIN_NAME:-Admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@partyos.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      PARTYOS_ALLOW_REGISTRATION: ${PARTYOS_ALLOW_REGISTRATION:-false}
+    volumes:
+      - ${PARTYOS_DATA_PATH:-partyos-data}:/var/lib/partyos
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1/up') === false ? 1 : 0);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  partyos-data:
