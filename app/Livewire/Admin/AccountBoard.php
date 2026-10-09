@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Admin;
 
-use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Domain\Accounts\CreatePlatformAccount;
 use App\Enums\AccountKind;
@@ -18,7 +17,6 @@ use Livewire\Component;
 #[Title('Contas')]
 class AccountBoard extends Component
 {
-    use PasswordValidationRules;
     use ProfileValidationRules;
 
     public bool $showForm = false;
@@ -48,7 +46,7 @@ class AccountBoard extends Component
     {
         $validated = $this->validate([
             ...$this->profileRules(),
-            'password' => $this->passwordRules(),
+            'password' => ['required', 'string', 'confirmed'],
             'kind' => ['required', Rule::enum(AccountKind::class)],
         ], [
             'name.required' => 'Qual é o nome da pessoa?',

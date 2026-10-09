@@ -56,8 +56,8 @@ class AccountBoardTest extends TestCase
             ->call('create')
             ->set('name', 'Casa Norte')
             ->set('email', 'Casa@Norte.test')
-            ->set('password', 'senha-inicial-123')
-            ->set('password_confirmation', 'senha-inicial-123')
+            ->set('password', 'a')
+            ->set('password_confirmation', 'a')
             ->set('kind', AccountKind::Organizer->value)
             ->call('save')
             ->assertHasNoErrors();
@@ -67,7 +67,7 @@ class AccountBoardTest extends TestCase
         $this->assertInstanceOf(User::class, $organizer);
         $this->assertSame(AccountKind::Organizer, $organizer->account_kind);
         $this->assertNotNull($organizer->email_verified_at);
-        $this->assertTrue(Hash::check('senha-inicial-123', $organizer->password));
+        $this->assertTrue(Hash::check('a', $organizer->password));
         $this->assertFalse($organizer->isPlatformAdmin());
         $this->assertSame(OrgRole::Owner, $organizer->organization?->roleFor($organizer));
 
