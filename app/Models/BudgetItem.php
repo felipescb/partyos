@@ -19,13 +19,21 @@ use Illuminate\Support\Carbon;
  * @property int|null $cost_category_id
  * @property int|null $vendor_id
  * @property string $description
+ * @property int $quantity
+ * @property int|null $unit_amount
+ * @property string|null $detail
  * @property int $estimated_amount
  * @property int|null $contracted_amount
  * @property Carbon|null $due_on
  * @property CostStatus $status
  * @property string|null $payment_method
+ * @property string|null $responsible_name
+ * @property string|null $pix
+ * @property string|null $invoice_number
+ * @property string|null $invoice_url
  * @property int|null $assignee_id
  * @property string|null $notes
+ * @property int $sort_order
  */
 #[Fillable([
     'budget_id',
@@ -33,13 +41,21 @@ use Illuminate\Support\Carbon;
     'cost_category_id',
     'vendor_id',
     'description',
+    'quantity',
+    'unit_amount',
+    'detail',
     'estimated_amount',
     'contracted_amount',
     'due_on',
     'status',
     'payment_method',
+    'responsible_name',
+    'pix',
+    'invoice_number',
+    'invoice_url',
     'assignee_id',
     'notes',
+    'sort_order',
 ])]
 class BudgetItem extends Model
 {
@@ -51,8 +67,11 @@ class BudgetItem extends Model
     protected function casts(): array
     {
         return [
+            'quantity' => 'integer',
+            'unit_amount' => 'integer',
             'estimated_amount' => 'integer',
             'contracted_amount' => 'integer',
+            'sort_order' => 'integer',
             'due_on' => 'date',
             'status' => CostStatus::class,
         ];

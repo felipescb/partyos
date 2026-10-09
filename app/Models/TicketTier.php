@@ -18,10 +18,11 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $starts_at
  * @property Carbon|null $ends_at
  * @property int $sold_quantity
+ * @property int|null $payout_basis_points
  * @property int $sort_order
  */
 #[Fillable([
-    'event_id', 'name', 'price', 'quantity', 'goal', 'starts_at', 'ends_at', 'sold_quantity', 'sort_order',
+    'event_id', 'name', 'price', 'quantity', 'goal', 'starts_at', 'ends_at', 'sold_quantity', 'payout_basis_points', 'sort_order',
 ])]
 class TicketTier extends Model
 {
@@ -37,6 +38,7 @@ class TicketTier extends Model
             'quantity' => 'integer',
             'goal' => 'integer',
             'sold_quantity' => 'integer',
+            'payout_basis_points' => 'integer',
             'sort_order' => 'integer',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',

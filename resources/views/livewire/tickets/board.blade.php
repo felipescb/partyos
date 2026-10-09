@@ -94,6 +94,7 @@
                 <flux:input wire:model="goal" type="number" min="0" label="Meta de vendas" />
                 <flux:input wire:model="sold" type="number" min="0" label="Já vendidos" />
             </div>
+            <flux:input wire:model="payout" type="number" min="0" max="100" label="Repasse da bilheteria (%)" />
             <div class="grid gap-4 md:grid-cols-2">
                 <flux:input wire:model="startsAt" type="datetime-local" label="Início das vendas" />
                 <flux:input wire:model="endsAt" type="datetime-local" label="Fim das vendas" />

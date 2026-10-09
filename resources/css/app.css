@@ -79,6 +79,53 @@
     --broker-cat-evento-soft: #686b8214;
     --broker-cat-novo-ink: #7132f5;
     --broker-cat-novo-soft: #855bfb29;
+
+    --cost-cat-artistas: #6d28d9;
+    --cost-cat-artistas-soft: #6d28d91f;
+    --cost-cat-caches: #7c3aed;
+    --cost-cat-caches-soft: #7c3aed1f;
+    --cost-cat-venue: #be185d;
+    --cost-cat-venue-soft: #be185d1a;
+    --cost-cat-seguranca: #b42318;
+    --cost-cat-seguranca-soft: #b423181f;
+    --cost-cat-fotografia: #1d4ed8;
+    --cost-cat-fotografia-soft: #1d4ed81a;
+    --cost-cat-video: #4338ca;
+    --cost-cat-video-soft: #4338ca1a;
+    --cost-cat-som: #b45309;
+    --cost-cat-som-soft: #b453091f;
+    --cost-cat-luz: #a16207;
+    --cost-cat-luz-soft: #ca8a041f;
+    --cost-cat-cenografia: #be123c;
+    --cost-cat-cenografia-soft: #be123c1a;
+    --cost-cat-producao: #0f766e;
+    --cost-cat-producao-soft: #0f766e1f;
+    --cost-cat-staff: #0369a1;
+    --cost-cat-staff-soft: #0369a11f;
+    --cost-cat-marketing: #a21caf;
+    --cost-cat-marketing-soft: #a21caf1a;
+    --cost-cat-transporte: #c2410c;
+    --cost-cat-transporte-soft: #c2410c1f;
+    --cost-cat-hospedagem: #0e7490;
+    --cost-cat-hospedagem-soft: #0e74901a;
+    --cost-cat-alimentacao: #15803d;
+    --cost-cat-alimentacao-soft: #15803d1f;
+    --cost-cat-bar: #4d7c0f;
+    --cost-cat-bar-soft: #4d7c0f1f;
+    --cost-cat-compras: #9a3412;
+    --cost-cat-compras-soft: #9a34121a;
+    --cost-cat-material: #57534e;
+    --cost-cat-material-soft: #57534e1f;
+    --cost-cat-taxas: #44403c;
+    --cost-cat-taxas-soft: #44403c1a;
+    --cost-cat-impostos: #9f1239;
+    --cost-cat-impostos-soft: #9f12391a;
+    --cost-cat-licencas: #1e3a8a;
+    --cost-cat-licencas-soft: #1e3a8a1a;
+    --cost-cat-outros: #484b5e;
+    --cost-cat-outros-soft: #686b8214;
+    --cost-cat-none: #686b82;
+    --cost-cat-none-soft: transparent;
 }
 
 @layer theme {
@@ -2982,6 +3029,221 @@ a.broker-card-alert:hover {
     .broker-ticket-cell-window .broker-ticket-sub {
         white-space: normal;
     }
+}
+
+.broker-cost-notebook {
+    height: calc(100dvh - 1.75rem);
+    min-height: 0;
+    margin: -0.85rem;
+    padding: 0.75rem;
+}
+
+@media (min-width: 900px) {
+    .broker-cost-notebook {
+        margin: -1rem -1.25rem -1.25rem;
+        padding: 0.85rem 1.25rem 1rem;
+    }
+}
+
+.broker-cost-sheet {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    background: var(--color-canvas);
+    border: 1px solid var(--color-line);
+}
+
+.broker-cost-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+}
+
+.broker-cost-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+@media (min-width: 800px) {
+    .broker-cost-stats {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.broker-cost-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    padding: 0.55rem 0.7rem 0.6rem;
+    background: var(--color-canvas);
+    border: 1px solid var(--color-line);
+    box-shadow: var(--shadow-micro);
+}
+
+.broker-cost-stat-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: var(--color-ink);
+}
+
+.broker-cost-stat-foot {
+    font-size: 11px;
+    color: var(--color-steel);
+}
+
+.broker-cost-columns,
+.broker-cost-row {
+    display: grid;
+    grid-template-columns:
+        14rem
+        9.5rem
+        minmax(8rem, 1fr)
+        minmax(7.5rem, 0.9fr)
+        4.5rem
+        6.5rem
+        6.75rem
+        6.75rem
+        6.25rem
+        8.25rem
+        7.75rem
+        7rem
+        8rem
+        8rem
+        5.5rem
+        7rem
+        minmax(8rem, 1fr)
+        4.25rem;
+    align-items: center;
+    min-width: 134rem;
+}
+
+.broker-cost-columns {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    border-bottom: 1px solid var(--color-line);
+    background: var(--color-zinc-50);
+}
+
+.broker-cost-row {
+    border-bottom: 1px solid var(--color-line);
+    background: var(--color-canvas);
+}
+
+.broker-cost-row:hover {
+    background: var(--color-zinc-50);
+}
+
+.broker-cost-row-muted {
+    opacity: 0.65;
+}
+
+.broker-cost-cell {
+    min-width: 0;
+    padding: 0.35rem 0.3rem;
+}
+
+.broker-cost-cell-item,
+.broker-cost-cell-category {
+    position: sticky;
+    z-index: 1;
+    background: var(--color-canvas);
+}
+
+.broker-cost-cell-item {
+    left: 0;
+    padding-left: 0.75rem;
+    box-shadow: inset 3px 0 0 var(--cost-cat-ink, transparent), 1px 0 0 var(--color-line);
+}
+
+.broker-cost-cell-category {
+    left: 14rem;
+    box-shadow: 1px 0 0 var(--color-line);
+}
+
+.broker-cost-columns .broker-cost-cell-item,
+.broker-cost-columns .broker-cost-cell-category {
+    z-index: 4;
+    background: var(--color-zinc-50);
+    box-shadow: 1px 0 0 var(--color-line);
+}
+
+.broker-cost-row:hover .broker-cost-cell-item {
+    background: var(--color-zinc-50);
+}
+
+.broker-cost-row .broker-cost-cell-category {
+    background: var(--cost-cat-soft, var(--color-canvas));
+}
+
+.broker-cost-row:hover .broker-cost-cell-category {
+    background: var(--cost-cat-soft, var(--color-zinc-50));
+}
+
+.broker-cost-cell-category .broker-task-notebook-select,
+.broker-cost-cell-category .broker-task-notebook-read {
+    color: var(--cost-cat-ink, var(--color-ink));
+    font-weight: 600;
+    background: transparent;
+}
+
+.broker-cost-cat-artistas { --cost-cat-ink: var(--cost-cat-artistas); --cost-cat-soft: var(--cost-cat-artistas-soft); }
+.broker-cost-cat-caches { --cost-cat-ink: var(--cost-cat-caches); --cost-cat-soft: var(--cost-cat-caches-soft); }
+.broker-cost-cat-venue { --cost-cat-ink: var(--cost-cat-venue); --cost-cat-soft: var(--cost-cat-venue-soft); }
+.broker-cost-cat-seguranca { --cost-cat-ink: var(--cost-cat-seguranca); --cost-cat-soft: var(--cost-cat-seguranca-soft); }
+.broker-cost-cat-fotografia { --cost-cat-ink: var(--cost-cat-fotografia); --cost-cat-soft: var(--cost-cat-fotografia-soft); }
+.broker-cost-cat-video { --cost-cat-ink: var(--cost-cat-video); --cost-cat-soft: var(--cost-cat-video-soft); }
+.broker-cost-cat-som { --cost-cat-ink: var(--cost-cat-som); --cost-cat-soft: var(--cost-cat-som-soft); }
+.broker-cost-cat-luz { --cost-cat-ink: var(--cost-cat-luz); --cost-cat-soft: var(--cost-cat-luz-soft); }
+.broker-cost-cat-cenografia { --cost-cat-ink: var(--cost-cat-cenografia); --cost-cat-soft: var(--cost-cat-cenografia-soft); }
+.broker-cost-cat-producao { --cost-cat-ink: var(--cost-cat-producao); --cost-cat-soft: var(--cost-cat-producao-soft); }
+.broker-cost-cat-staff { --cost-cat-ink: var(--cost-cat-staff); --cost-cat-soft: var(--cost-cat-staff-soft); }
+.broker-cost-cat-marketing { --cost-cat-ink: var(--cost-cat-marketing); --cost-cat-soft: var(--cost-cat-marketing-soft); }
+.broker-cost-cat-transporte { --cost-cat-ink: var(--cost-cat-transporte); --cost-cat-soft: var(--cost-cat-transporte-soft); }
+.broker-cost-cat-hospedagem { --cost-cat-ink: var(--cost-cat-hospedagem); --cost-cat-soft: var(--cost-cat-hospedagem-soft); }
+.broker-cost-cat-alimentacao { --cost-cat-ink: var(--cost-cat-alimentacao); --cost-cat-soft: var(--cost-cat-alimentacao-soft); }
+.broker-cost-cat-bar { --cost-cat-ink: var(--cost-cat-bar); --cost-cat-soft: var(--cost-cat-bar-soft); }
+.broker-cost-cat-compras { --cost-cat-ink: var(--cost-cat-compras); --cost-cat-soft: var(--cost-cat-compras-soft); }
+.broker-cost-cat-material { --cost-cat-ink: var(--cost-cat-material); --cost-cat-soft: var(--cost-cat-material-soft); }
+.broker-cost-cat-taxas { --cost-cat-ink: var(--cost-cat-taxas); --cost-cat-soft: var(--cost-cat-taxas-soft); }
+.broker-cost-cat-impostos { --cost-cat-ink: var(--cost-cat-impostos); --cost-cat-soft: var(--cost-cat-impostos-soft); }
+.broker-cost-cat-licencas { --cost-cat-ink: var(--cost-cat-licencas); --cost-cat-soft: var(--cost-cat-licencas-soft); }
+.broker-cost-cat-outros { --cost-cat-ink: var(--cost-cat-outros); --cost-cat-soft: var(--cost-cat-outros-soft); }
+.broker-cost-cat-none { --cost-cat-ink: var(--cost-cat-none); --cost-cat-soft: var(--cost-cat-none-soft); }
+
+.broker-cost-cell-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.1rem;
+    padding-right: 0.45rem;
+}
+
+.broker-cost-input-money,
+.broker-cost-input-number,
+.broker-cost-paid {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.broker-cost-link {
+    color: var(--color-brand);
+    text-decoration: none;
+}
+
+.broker-cost-link:hover {
+    text-decoration: underline;
+}
+
+.broker-cost-compose {
+    grid-template-columns: minmax(12rem, 1fr) auto;
 }
 
 /* \[:where(&)\]:size-4 {

@@ -131,6 +131,7 @@ final class DuplicateEvent
                         'price' => $tier->price,
                         'quantity' => $tier->quantity,
                         'goal' => $tier->goal,
+                        'payout_basis_points' => $tier->payout_basis_points,
                         'starts_at' => $this->shiftDateTime($tier->starts_at, $source->starts_at, $copy->starts_at),
                         'ends_at' => $this->shiftDateTime($tier->ends_at, $source->starts_at, $copy->starts_at),
                         'sold_quantity' => 0,
@@ -160,12 +161,20 @@ final class DuplicateEvent
             'cost_category_id' => $item->cost_category_id,
             'vendor_id' => $item->vendor_id,
             'description' => $item->description,
+            'quantity' => $item->quantity,
+            'unit_amount' => $item->unit_amount,
+            'detail' => $item->detail,
             'estimated_amount' => $item->estimated_amount,
             'contracted_amount' => $item->contracted_amount,
             'due_on' => $this->shiftDate($item->due_on, $from, $to),
             'status' => $status,
             'payment_method' => $item->payment_method,
+            'responsible_name' => $item->responsible_name,
+            'pix' => $item->pix,
+            'invoice_number' => $item->invoice_number,
+            'invoice_url' => $item->invoice_url,
             'notes' => $item->notes,
+            'sort_order' => $item->sort_order,
         ]);
     }
 
@@ -179,6 +188,9 @@ final class DuplicateEvent
                 'budget_id' => $copy->budget?->id,
                 'cost_category_id' => $sourceItem->cost_category_id,
                 'description' => $sourceItem->description,
+                'quantity' => $sourceItem->quantity,
+                'unit_amount' => $sourceItem->unit_amount,
+                'detail' => $sourceItem->detail,
                 'estimated_amount' => $sourceItem->estimated_amount,
                 'contracted_amount' => $sourceItem->contracted_amount,
                 'due_on' => $this->shiftDate($sourceItem->due_on, $from, $to),
@@ -186,7 +198,12 @@ final class DuplicateEvent
                     ? CostStatus::Contracted
                     : $sourceItem->status,
                 'payment_method' => $sourceItem->payment_method,
+                'responsible_name' => $sourceItem->responsible_name,
+                'pix' => $sourceItem->pix,
+                'invoice_number' => $sourceItem->invoice_number,
+                'invoice_url' => $sourceItem->invoice_url,
                 'notes' => $sourceItem->notes,
+                'sort_order' => $sourceItem->sort_order,
             ]);
         }
 

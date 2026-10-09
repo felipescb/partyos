@@ -11,13 +11,11 @@ final class OfficialCatalog
 {
     public static function ensure(): void
     {
-        if (! CostCategory::query()->where('is_system', true)->exists()) {
-            foreach (self::categories() as $slug => $name) {
-                CostCategory::query()->updateOrCreate(
-                    ['slug' => $slug],
-                    ['name' => $name, 'is_system' => true, 'organization_id' => null],
-                );
-            }
+        foreach (self::categories() as $slug => $name) {
+            CostCategory::query()->firstOrCreate(
+                ['slug' => $slug],
+                ['name' => $name, 'is_system' => true, 'organization_id' => null],
+            );
         }
 
         self::syncTemplates();
@@ -85,6 +83,8 @@ final class OfficialCatalog
             'hospedagem' => 'Hospedagem',
             'alimentacao' => 'Alimentação',
             'bar' => 'Bar',
+            'compras' => 'Compras',
+            'material' => 'Material',
             'taxas' => 'Taxas',
             'impostos' => 'Impostos',
             'licencas' => 'Licenças',

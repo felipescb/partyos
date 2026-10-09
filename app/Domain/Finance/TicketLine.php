@@ -11,5 +11,6 @@ final readonly class TicketLine
         public int $goal,
         public int $sold,
         public ?int $projectedSold = null,
+        public int $payoutBasisPoints = 10000,
     ) {}
 }

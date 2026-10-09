@@ -35,6 +35,7 @@ final class EventFinanceReader
                 quantity: $tier->quantity,
                 goal: $tier->goal,
                 sold: $tier->sold_quantity,
+                payoutBasisPoints: $tier->payout_basis_points ?? 10000,
             );
         }
 
@@ -120,6 +121,7 @@ final class EventFinanceReader
                 goal: $ticket->goal,
                 sold: $ticket->sold,
                 projectedSold: $ticketOverrides[$ticket->id] ?? $ticket->goal,
+                payoutBasisPoints: $ticket->payoutBasisPoints,
             );
         }, $input->tickets);
 

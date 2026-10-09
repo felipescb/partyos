@@ -5,6 +5,7 @@ namespace App\Enums;
 enum CostStatus: string
 {
     case Planned = 'planned';
+    case Seeking = 'seeking';
     case Quoted = 'quoted';
     case Negotiating = 'negotiating';
     case Contracted = 'contracted';
@@ -16,6 +17,7 @@ enum CostStatus: string
     {
         return match ($this) {
             self::Planned => 'Planejado',
+            self::Seeking => 'À procura',
             self::Quoted => 'Orçado',
             self::Negotiating => 'Negociando',
             self::Contracted => 'Contratado',

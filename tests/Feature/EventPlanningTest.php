@@ -123,6 +123,36 @@ class EventPlanningTest extends TestCase
             ->assertHasErrors(['description']);
     }
 
+    public function test_cost_sheet_edits_a_cell_in_place(): void
+    {
+        $user = User::factory()->create();
+        $event = app(CreateEvent::class)->handle($user, [
+            'name' => 'Show',
+            'type' => EventType::Show,
+        ]);
+        $item = $event->budgetItems()->create([
+            'budget_id' => $event->budget->id,
+            'description' => 'Som',
+            'quantity' => 1,
+            'estimated_amount' => 10000,
+            'status' => CostStatus::Planned,
+        ]);
+
+        Livewire::actingAs($user)
+            ->test(BudgetBoard::class, ['event' => $event])
+            ->assertSee('Quantidade')
+            ->assertSee('PIX / CPF')
+            ->assertSee('Tipo / nome')
+            ->call('updateCost', $item->id, 'quantity', '3')
+            ->call('updateCost', $item->id, 'detail', 'Core')
+            ->call('updateCost', $item->id, 'status', CostStatus::Contracted->value);
+
+        $item->refresh();
+        $this->assertSame(3, $item->quantity);
+        $this->assertSame('Core', $item->detail);
+        $this->assertSame(CostStatus::Contracted, $item->status);
+    }
+
     public function test_event_overview_ticket_grid_shows_sales_and_expands(): void
     {
         $user = User::factory()->create();

@@ -1,58 +1,49 @@
-<div class="flex flex-col gap-5">
-    <div class="flex flex-wrap items-end justify-between gap-3">
-        <div>
-            <flux:heading size="xl">Custos</flux:heading>
-            <flux:text>Estimado é o plano. Contratado é o que você fechou. Pago é o que já saiu.</flux:text>
+<div class="broker-task-notebook broker-cost-notebook">
+    <header class="broker-task-notebook-head">
+        <div class="broker-task-notebook-head-main">
+            <a href="{{ route('events.show', $event) }}" wire:navigate class="broker-task-notebook-back">← Quadro</a>
+            <div>
+                <x-event-category-symbol category="financeiro" />
+                <h1 class="broker-task-notebook-title">Custos</h1>
+                <p class="broker-task-notebook-sub">{{ $event->name }}</p>
+            </div>
         </div>
         @if ($canEdit)
-            <flux:button variant="primary" wire:click="create">Adicionar custo</flux:button>
+            <flux:button variant="primary" wire:click="create" size="sm">Novo custo</flux:button>
         @endif
-    </div>
+    </header>
 
-    <section class="tile-grid">
-        <x-tile as="div" size="sm"><span class="tile-kicker">Estimado</span><span class="tile-value"><x-money :cents="$statement->estimatedCosts" :currency="$event->currency" /></span></x-tile>
-        <x-tile as="div" size="sm"><span class="tile-kicker">Contratado</span><span class="tile-value"><x-money :cents="$statement->contractedCosts" :currency="$event->currency" /></span></x-tile>
-        <x-tile as="div" size="sm"><span class="tile-kicker">Pago</span><span class="tile-value"><x-money :cents="$statement->paidCosts" :currency="$event->currency" /></span></x-tile>
-        <x-tile as="div" size="sm"><span class="tile-kicker">Resta</span><span class="tile-value"><x-money :cents="$statement->remainingCosts" :currency="$event->currency" /></span></x-tile>
+    <section class="broker-cost-stats" aria-label="Resumo dos custos">
+        @foreach ([
+            ['label' => 'Estimado', 'cents' => $statement->estimatedCosts, 'tone' => 'leitura', 'foot' => 'O plano'],
+            ['label' => 'Contratado', 'cents' => $statement->contractedCosts, 'tone' => 'equipe', 'foot' => 'O que fechou'],
+            ['label' => 'Pago', 'cents' => $statement->paidCosts, 'tone' => 'ao-vivo', 'foot' => 'O que já saiu'],
+            ['label' => 'Resta', 'cents' => $statement->remainingCosts, 'tone' => 'atencao', 'foot' => 'Ainda por pagar'],
+        ] as $card)
+            <article class="broker-cost-stat">
+                <span class="broker-card-symbol broker-cat broker-cat-{{ $card['tone'] }}">{{ $card['label'] }}</span>
+                <span class="broker-cost-stat-value"><x-money :cents="$card['cents']" :currency="$event->currency" /></span>
+                <span class="broker-cost-stat-foot">{{ $card['foot'] }}</span>
+            </article>
+        @endforeach
     </section>
 
-    @if ($items->isEmpty())
-        <x-empty-state title="Você ainda não adicionou nenhum custo." body="Comece pelo que já sabe: local, som, artistas. Dá para ajustar depois.">
-            @if ($canEdit)
-                <flux:button variant="primary" wire:click="create">Adicionar custo</flux:button>
-            @endif
-        </x-empty-state>
-    @else
-        <div class="tile-grid">
-            @foreach ($items as $item)
-                @php($paid = (int) $item->payments->where('status', \App\Enums\PaymentStatus::Paid)->sum('amount'))
-                @php($committed = $item->committedAmount())
-                @if ($canEdit)
-                    <button type="button" class="tile" wire:click="edit({{ $item->id }})">
-                @else
-                    <div class="tile">
-                @endif
-                    <span class="tile-kicker">{{ $item->category?->name ?? 'Sem categoria' }} · {{ $item->status->label() }}</span>
-                    <span class="tile-title">{{ $item->description }}</span>
-                    <span class="tile-value"><x-money :cents="$committed" :currency="$event->currency" /></span>
-                    <span class="tile-meta">
-                        Pago <x-money :cents="$paid" :currency="$event->currency" />
-                        · resta <x-money :cents="$committed - $paid" :currency="$event->currency" />
-                        @if ($item->vendor) · {{ $item->vendor->name }} @else · sem fornecedor @endif
-                    </span>
-                @if ($canEdit)
-                    </button>
-                @else
-                    </div>
-                @endif
-            @endforeach
-        </div>
-    @endif
+    <x-event-cost-grid
+        :event="$event"
+        :items="$items"
+        :categories="$categories"
+        :vendors="$vendors"
+        :statuses="$statuses"
+        :can-edit="$canEdit"
+        :sort-column="$sortColumn"
+        :sort-direction="$sortDirection"
+    />
 
     <flux:modal wire:model="showForm" class="max-w-2xl">
         <form wire:submit="save" class="space-y-4">
             <flux:heading size="lg">{{ $editingId ? 'Editar custo' : 'Novo custo' }}</flux:heading>
             <flux:input wire:model="description" label="Descrição" placeholder="Fotografia da festa" />
+            <flux:input wire:model="detail" label="Tipo / nome" placeholder="Quem faz, ou o modelo" />
             <div class="grid gap-4 md:grid-cols-2">
                 <flux:select wire:model="categoryId" label="Categoria" placeholder="Escolher">
                     <flux:select.option value="">Sem categoria</flux:select.option>
@@ -68,10 +59,12 @@
                 </flux:select>
             </div>
             <flux:input wire:model="newVendorName" label="Ou cadastrar fornecedor agora" placeholder="Nome" />
-            <div class="grid gap-4 md:grid-cols-2">
-                <flux:input wire:model="estimated" label="Quanto você espera gastar?" placeholder="1.000,00" />
-                <flux:input wire:model="contracted" label="Quanto ficou contratado?" placeholder="Deixe vazio se ainda não fechou" />
+            <div class="grid gap-4 md:grid-cols-3">
+                <flux:input wire:model="quantity" type="number" min="0" label="Quantidade" />
+                <flux:input wire:model="unitAmount" label="Valor unitário" placeholder="8,00" />
+                <flux:input wire:model="estimated" label="Total estimado" placeholder="1.000,00" />
             </div>
+            <flux:input wire:model="contracted" label="Quanto ficou contratado?" placeholder="Deixe vazio se ainda não fechou" />
             <div class="grid gap-4 md:grid-cols-3">
                 <flux:input wire:model="dueOn" type="date" label="Vencimento" />
                 <flux:select wire:model="status" label="Status">
@@ -80,6 +73,14 @@
                     @endforeach
                 </flux:select>
                 <flux:input wire:model="paymentMethod" label="Forma de pagamento" placeholder="PIX, transferência" />
+            </div>
+            <div class="grid gap-4 md:grid-cols-2">
+                <flux:input wire:model="responsibleName" label="Responsável pelo pagamento" />
+                <flux:input wire:model="pix" label="PIX / CPF" />
+            </div>
+            <div class="grid gap-4 md:grid-cols-2">
+                <flux:input wire:model="invoiceNumber" label="Nota fiscal" />
+                <flux:input wire:model="invoiceUrl" label="Link da nota" />
             </div>
             <flux:textarea wire:model="notes" label="Observação" rows="2" />
             <div class="flex justify-between gap-2">

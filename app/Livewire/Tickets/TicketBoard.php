@@ -44,6 +44,8 @@ class TicketBoard extends Component
 
     public string $sold = '';
 
+    public string $payout = '100';
+
     public string $startsAt = '';
 
     public string $endsAt = '';
@@ -70,6 +72,7 @@ class TicketBoard extends Component
         $this->quantity = (string) $tier->quantity;
         $this->goal = (string) $tier->goal;
         $this->sold = (string) $tier->sold_quantity;
+        $this->payout = (string) intdiv($tier->payout_basis_points ?? 10000, 100);
         $this->startsAt = $tier->starts_at?->format('Y-m-d\TH:i') ?? '';
         $this->endsAt = $tier->ends_at?->format('Y-m-d\TH:i') ?? '';
         $this->showForm = true;
@@ -84,6 +87,7 @@ class TicketBoard extends Component
             'quantity' => ['required', 'integer', 'min:0'],
             'goal' => ['required', 'integer', 'min:0'],
             'sold' => ['required', 'integer', 'min:0'],
+            'payout' => ['required', 'integer', 'min:0', 'max:100'],
             'startsAt' => ['nullable', 'date'],
             'endsAt' => ['nullable', 'date'],
         ], [
@@ -99,6 +103,7 @@ class TicketBoard extends Component
             'quantity' => (int) $this->quantity,
             'goal' => (int) $this->goal,
             'sold_quantity' => (int) $this->sold,
+            'payout_basis_points' => ((int) $this->payout) * 100,
             'starts_at' => $this->startsAt !== '' ? $this->startsAt : null,
             'ends_at' => $this->endsAt !== '' ? $this->endsAt : null,
             'sort_order' => $this->editingId
@@ -212,6 +217,7 @@ class TicketBoard extends Component
         $this->quantity = '';
         $this->goal = '';
         $this->sold = '0';
+        $this->payout = '100';
         $this->startsAt = '';
         $this->endsAt = '';
     }

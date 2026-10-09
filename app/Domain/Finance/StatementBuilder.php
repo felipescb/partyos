@@ -20,8 +20,8 @@ final class StatementBuilder
         $capacityHeads = 0;
 
         foreach ($input->tickets as $ticket) {
-            $expectedTickets += $ticket->price * max(0, $ticket->goal);
-            $actualTickets += $ticket->price * max(0, $ticket->sold);
+            $expectedTickets += Money::portion($ticket->price * max(0, $ticket->goal), $ticket->payoutBasisPoints);
+            $actualTickets += Money::portion($ticket->price * max(0, $ticket->sold), $ticket->payoutBasisPoints);
             $goalHeads += max(0, $ticket->goal);
             $soldHeads += max(0, $ticket->sold);
             $capacityHeads += max(0, $ticket->quantity);
@@ -118,7 +118,7 @@ final class StatementBuilder
 
         foreach ($input->tickets as $ticket) {
             $sold = $ticket->projectedSold ?? $ticket->goal;
-            $ticketGross += $ticket->price * max(0, $sold);
+            $ticketGross += Money::portion($ticket->price * max(0, $sold), $ticket->payoutBasisPoints);
             $heads += max(0, $sold);
         }
 

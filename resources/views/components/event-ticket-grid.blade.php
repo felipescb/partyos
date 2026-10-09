@@ -118,6 +118,9 @@
                                     @if ($tier->quantity > 0)
                                         <span class="broker-ticket-sub">{{ $tier->quantity }} no lote</span>
                                     @endif
+                                    @if ($tier->payout_basis_points !== null && $tier->payout_basis_points !== 10000)
+                                        <span class="broker-ticket-sub">repasse {{ \App\Domain\Finance\Money::formatPercent($tier->payout_basis_points) }}</span>
+                                    @endif
                                 </div>
                                 <div class="broker-ticket-cell broker-ticket-cell-price">
                                     <x-money :cents="$tier->price" :currency="$event->currency" />
